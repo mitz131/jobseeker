@@ -1,0 +1,93 @@
+[settings]
+db_path = "data/jobs.db"         # relative to this file
+request_delay = 0.5              # seconds between HTTP requests
+max_new_per_company = 200        # cap detail fetches per run; the rest are picked up next run
+places_register = "data/AMTOVZ_CSV_LV95.csv"   # swisstopo locality register, for `near` / `places`
+places_file = "places.toml"               # hand-edited aliases and regions
+
+# --- Filters -------------------------------------------------------------
+# search            : sent to the site's own search (server-side)
+# facet_filters     : Workday only, server-side, by display name; resolved to IDs
+#                     on every run (fails loudly if a name doesn't match)
+# facets            : Workday: raw IDs from `python -m jobseeker facets <name>`
+#                     SuccessFactors: site facet codes, e.g. { country = "CH" }
+# selected_fields   : Phenom only, facet values by name
+# [company.filter]  : client-side, case-insensitive, whole-word match
+#   title_include   : keep if the title contains ANY of these (whole words)
+#   title_exclude   : drop if the title contains ANY of these (whole words)
+#   location_include: keep if the location contains ANY of these (whole words)
+
+[[company]]
+name = "salesforce"
+type = "workday"
+base_url = "https://salesforce.wd12.myworkdayjobs.com"
+tenant = "salesforce"
+site = "External_Career_Site"
+search = ""
+facet_filters = { Country = ["Switzerland"] }
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "philipmorris"
+type = "phenom"
+base_url = "https://join.pmicareers.com"
+search = ""
+selected_fields = { country = ["Switzerland"] }   # server-side facet, by name
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "nestle"
+type = "successfactors"
+base_url = "https://jobdetails.nestle.com"
+search = ""
+facets = { country = "CH" }      # server-side country filter (ISO code)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "logitech"
+type = "workday"
+base_url = "https://logitech.wd5.myworkdayjobs.com"
+tenant = "logitech"
+site = "Logitech"
+search = ""
+facet_filters = { Country = ["Switzerland"] }
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "vaudoise"
+type = "vaudoise"                # Switzerland-only employer: no country filter needed
+listing_url = "https://www.vaudoise.ch/fr/carrieres/postes-disponibles"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "etatdevaud"
+type = "oracle"                  # Swiss public employer: no country filter needed
+host = "https://fa-ewrg-saasfaeuraprod1.fa.ocs.oraclecloud.com"
+sites = ["CX_1", "enseignement"]  # general + teaching; jobs on both are stored once
+public_url = "https://offres-emploi.vd.ch/#fr/sites/{site}"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+
+[[company]]
+name = "bcv"
+type = "successfactors"          # newer career site: results come from a JSON endpoint
+base_url = "https://jobs.bcv.ch"
+listing = "api"
+locale = "fr_FR"
+search = ""                      # Vaud bank: no country filter needed
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "salt"
+type = "jobcloud"                # job list hosted by JobCloud, linked from salt.ch/careers
+company = "salt-mobile-sa"
+lang = "fr"                      # Swiss-only employer: no country filter needed
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

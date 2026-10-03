@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobseeker"
+version = "0.1.0"
+description = "Daily crawler for Swiss job openings, with distance search"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+jobseeker = "jobseeker.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jobseeker*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,39 @@
+# Hand-edited place data, used together with swisstopo's locality register
+# (AMTOVZ_CSV_LV95.csv). `python -m jobseeker places --unresolved` lists the
+# location strings that still need a line here.
+#
+# Names on the right-hand side are locality names as written in the register.
+# Matching ignores case, accents and ü/ue (Zürich = Zurich = Zuerich).
+
+# Location strings that deliberately get no point (shown as "location unknown").
+# Country-only strings ("Suisse", "Non-défini") need no entry.
+ignore = [
+    "Cork, Ireland",
+    "London, United Kingdom",
+    "Utrecht, Netherlands",
+]
+
+[aliases]
+# Name used in job ads = locality name in the register
+"Berne" = "Bern"
+"Thoune" = "Thun"
+"Cheseaux-Lausanne" = "Cheseaux-sur-Lausanne"
+"Romont" = "Romont FR"            # Nestlé's site; Romont BE is a different town
+"Bienne" = "Biel/Bienne"
+"Biel" = "Biel/Bienne"            # otherwise "Biel" matches the hamlet Biel VS (Goms)
+# A lone "Zurich", "Bern", "Luzern"... is read as the town. Strings listing
+# several canton names ("Berne, Argovie, Soleure") are read as those cantons.
+
+[regions]
+# A region is the list of localities it covers. Distance to a region is the
+# distance to its nearest member, so it is 0 when you live in one of them.
+#
+# DRAFT: the BCV regions below are a geographic guess, not BCV's own
+# definition. Review and extend them.
+"Riviera" = ["Vevey", "La Tour-de-Peilz", "Montreux", "Blonay", "Corseaux",
+             "Chardonne", "Corsier-sur-Vevey", "Jongny", "Villeneuve VD"]
+"Chablais" = ["Aigle", "Bex", "Ollon VD", "Villars-sur-Ollon", "Yvorne", "Leysin",
+              "Gryon", "Lavey-Village"]
+"Broye" = ["Payerne", "Moudon", "Avenches", "Lucens", "Granges-près-Marnand"]
+"Gros-de-Vaud" = ["Echallens", "Penthalaz", "Penthaz", "Bercher", "Bottens",
+                  "Assens", "Poliez-Pittet"]
