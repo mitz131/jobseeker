@@ -154,7 +154,7 @@ def main(argv=None) -> int:
 
     sv = sub.add_parser("serve", help="start the web API (and, later, the web page)")
     sv.add_argument("--host", default="127.0.0.1", help="0.0.0.0 to accept connections from outside")
-    sv.add_argument("--port", type=int, default=8000)
+    sv.add_argument("--port", type=int, default=8090, help="default: 8090")
 
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,

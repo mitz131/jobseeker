@@ -40,6 +40,9 @@ jobseeker/
   api/                   web API (FastAPI): app.py, refresh.py
   config.py              config.toml and derived paths (shared)
 tests/                   mirrors the package: tests/crawler/, tests/api/, test_places.py
+frontend/
+  src/                   index.html, style.css, app.js (page), lib.js (pure logic)
+  tests/                 lib.test.js – `npm test` in frontend/ (Node 18+, no dependencies)
 ```
 
 ## How it works
@@ -71,7 +74,8 @@ jobseeker run                    # all companies
 jobseeker run salesforce         # just one
 jobseeker facets salesforce      # Workday filter IDs (country, category, ...)
 jobseeker list --since 2026-10-01 [--company nestle] [--full | --json]
-pytest                           # tests
+pytest                           # Python tests
+(cd frontend && npm test)        # JavaScript tests
 ```
 
 Filters live in `config.toml`: `search` (server-side), `facet_filters` such as
@@ -116,14 +120,22 @@ region or canton is at 0 km when the starting point is one of its localities;
 The register is updated monthly by swisstopo; refreshing it about once a year
 is enough (municipality mergers).
 
-## Web API
+## Web page and API
 
 ```bash
-jobseeker serve                        # http://127.0.0.1:8000
+jobseeker serve                        # http://127.0.0.1:8090
 jobseeker serve --host 0.0.0.0         # reachable from outside (e.g. from the sandbox host)
 ```
 
-Interactive documentation: **`/docs`** (Swagger UI) and `/redoc`.
+- **`/`** – the job list (plain JavaScript in `frontend/src/`, no build step).
+  Filter by starting point and distance, location text, employer and closed
+  jobs; sort by date or distance; click a row for the description. Filters are
+  kept in the page URL. When the data is older than 24 h, opening the page starts
+  the update in the background and the list reloads when it's done.
+- **`/docs`** (Swagger UI) and `/redoc` – interactive API documentation.
+
+From the sandbox host, publish the port first:
+`sbx ports <sandbox-name> --publish 8090:8090`.
 
 | Endpoint | |
 |---|---|

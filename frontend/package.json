@@ -1,0 +1,9 @@
+{
+  "name": "jobseeker-frontend",
+  "private": true,
+  "type": "module",
+  "description": "Plain JavaScript page for the jobseeker API, no build step and no dependencies",
+  "scripts": {
+    "test": "node --test"
+  }
+}

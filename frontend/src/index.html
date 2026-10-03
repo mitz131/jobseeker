@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jobseeker</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Jobseeker</h1>
+    <div class="status">
+      <span id="status-text">Loading…</span>
+      <button id="refresh" type="button" title="Fetch new jobs from all employers now">Refresh now</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <form id="filters" class="filters" autocomplete="off">
+    <label>From
+      <input id="home" name="home" placeholder="postcode or town, e.g. 1020" size="22">
+    </label>
+    <label>Within
+      <input id="max-km" name="max_km" type="number" min="0" step="1" placeholder="any" class="narrow"> km
+    </label>
+    <label>Location
+      <input id="location" name="location" placeholder="e.g. Lausanne" size="16">
+    </label>
+    <label>Sort
+      <select id="sort" name="sort">
+        <option value="date">Newest first</option>
+        <option value="distance">Nearest first</option>
+      </select>
+    </label>
+    <label class="check"><input id="include-closed" type="checkbox"> Include closed</label>
+    <fieldset id="companies" class="companies">
+      <legend>Employers</legend>
+    </fieldset>
+    <p id="filter-error" class="error" role="alert" hidden></p>
+  </form>
+
+  <main>
+    <p id="count" class="count"></p>
+    <table id="jobs">
+      <thead>
+        <tr>
+          <th class="col-date">First seen</th>
+          <th class="col-company">Employer</th>
+          <th>Title</th>
+          <th class="col-location">Location</th>
+          <th class="col-distance">Distance</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+</body>
+</html>

@@ -1,13 +1,16 @@
 """FastAPI app: browse stored jobs, filter by distance, refresh in the background.
 
-Interactive documentation is served at /docs (Swagger UI) and /redoc.
+Interactive documentation is served at /docs (Swagger UI) and /redoc; the web
+page (frontend/src) at /.
 """
 
 from collections.abc import Callable, Iterator
 from datetime import timedelta
+from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from ..config import Config
@@ -16,6 +19,9 @@ from ..crawler.runner import run_all
 from ..db import JobStore
 from ..places import distance_to_job, norm
 from .refresh import Refresher
+
+# The repository's frontend/src (jobseeker/api/app.py -> repository root)
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "src"
 
 
 class JobSummary(BaseModel):
@@ -67,8 +73,10 @@ class RefreshResult(BaseModel):
 
 
 def create_app(config: Config, batch: Callable[[], object] | None = None,
-               max_age: timedelta = timedelta(hours=24)) -> FastAPI:
-    """`batch` defaults to crawling every enabled company; tests pass a fake."""
+               max_age: timedelta = timedelta(hours=24),
+               frontend_dir: Path | None = FRONTEND_DIR) -> FastAPI:
+    """`batch` defaults to crawling every enabled company; tests pass a fake.
+    `frontend_dir` is served at / (None: API only)."""
 
     def store() -> Iterator[JobStore]:
         # One connection per request: FastAPI serves requests from a thread pool
@@ -183,4 +191,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         started, reason = refresher.start(force=force)
         return RefreshResult(started=started, reason=reason)
 
+    # Mounted last, so the API routes and /docs take precedence over files
+    if frontend_dir and frontend_dir.is_dir():
+        app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
     return app

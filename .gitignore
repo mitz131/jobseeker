@@ -8,3 +8,4 @@ __pycache__/
 # personal editor / tool settings
 .vscode/
 *.sqbpro
+frontend/node_modules/

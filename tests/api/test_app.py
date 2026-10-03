@@ -183,6 +183,22 @@ def test_crashing_batch_is_reported(config):
     assert client.get("/api/status").json()["refresh_error"] == "network down"
 
 
+def test_page_is_served_without_shadowing_the_api(config):
+    client, _ = client_for(config)
+    page = client.get("/")
+    assert page.status_code == 200 and "<title>Jobseeker</title>" in page.text
+    js = client.get("/app.js")
+    assert js.status_code == 200 and "javascript" in js.headers["content-type"]
+    assert client.get("/lib.js").status_code == 200
+    assert client.get("/api/status").json()["last_update"]  # still the API, not a file
+    assert client.get("/docs").status_code == 200
+
+
+def test_api_only_without_frontend(config):
+    app = create_app(config, batch=lambda: None, max_age=FRESH, frontend_dir=None)
+    assert TestClient(app).get("/").status_code == 404
+
+
 def test_swagger_docs(config):
     client, _ = client_for(config)
     assert client.get("/docs").status_code == 200
