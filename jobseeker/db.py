@@ -50,8 +50,11 @@ class JobStore:
 
     @staticmethod
     def _open(target: str, uri: bool = False) -> sqlite3.Connection:
-        # A reader (the web API) may meet the background batch mid-write: wait for it
-        conn = sqlite3.connect(target, uri=uri, timeout=30)
+        # A reader (the web API) may meet the background batch mid-write: wait for it.
+        # check_same_thread=False: FastAPI may open a request's connection on one
+        # worker thread and run the endpoint on another. Each connection still serves
+        # one request (or the batch) at a time, never two threads at once.
+        conn = sqlite3.connect(target, uri=uri, timeout=30, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         conn.executescript(SCHEMA)
         return conn
