@@ -11,26 +11,23 @@ to the job on Softgarden, Vaudoise's applicant tracking system:
 import json
 import re
 from collections.abc import Iterator
-from html import unescape
+
+from bs4 import BeautifulSoup, Tag
 
 from ..html_text import html_to_text
 from .base import JobDetail, JobRef
 
-CARD_RE = re.compile(
-    r'<a\s[^>]*?href="([^"]+)"[^>]*?data-shared-job-id="(\d+)"[^>]*>(.*?)</a>', re.S)
-TITLE_RE = re.compile(r'data-tui="job-title"\s*>(.*?)</h2>', re.S)
-LOCATION_RE = re.compile(r'data-tui="location"\s*>(.*?)</td>', re.S)
-POSTED_RE = re.compile(r"Publi(?:&#233;|é) le\s*:\s*([^<]+)<")
-LD_JSON_RE = re.compile(r'<script[^>]*application/ld\+json[^>]*>(.*?)</script>', re.S)
+POSTED_RE = re.compile(r"Publié le\s*:\s*(.+)")
 
 
-def _clean(fragment: str) -> str:
-    return html_to_text(unescape(fragment)).strip()
+def _text(el: Tag | None) -> str:
+    return " ".join(el.get_text(" ").split()) if el else ""
 
 
 def find_job_posting(page_html: str) -> dict:
-    for block in LD_JSON_RE.findall(page_html):
-        data = json.loads(block)
+    soup = BeautifulSoup(page_html, "html.parser")
+    for script in soup.find_all("script", type="application/ld+json"):
+        data = json.loads(script.get_text())
         for item in data if isinstance(data, list) else [data]:
             if isinstance(item, dict) and item.get("@type") == "JobPosting":
                 return item
@@ -43,21 +40,20 @@ class VaudoiseSource:
         self.listing_url = listing_url
 
     def list_jobs(self) -> Iterator[JobRef]:
-        page = self.client.get_text(self.listing_url)
+        soup = BeautifulSoup(self.client.get_text(self.listing_url), "html.parser")
         seen = set()
-        for url, job_id, card in CARD_RE.findall(page):
+        for card in soup.find_all("a", attrs={"data-shared-job-id": True}):
+            job_id = card["data-shared-job-id"]
             if job_id in seen:
                 continue
             seen.add(job_id)
-            title = TITLE_RE.search(card)
-            loc = LOCATION_RE.search(card)
-            posted = POSTED_RE.search(card)
+            posted = card.find(string=POSTED_RE)
             yield JobRef(
                 job_id=job_id,
-                title=_clean(title.group(1)) if title else "",
-                location=_clean(loc.group(1)) if loc else "",
-                url=unescape(url),
-                posted_on=posted.group(1).strip() if posted else "",
+                title=_text(card.find(attrs={"data-tui": "job-title"})),
+                location=_text(card.find(attrs={"data-tui": "location"})),
+                url=card["href"],
+                posted_on=POSTED_RE.search(posted).group(1).strip() if posted else "",
             )
         if not seen:
             raise RuntimeError(f"No jobs found on {self.listing_url}; page layout may have changed")

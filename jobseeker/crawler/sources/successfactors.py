@@ -16,91 +16,49 @@ import re
 import urllib.parse
 from collections.abc import Iterator
 from html import unescape
-from html.parser import HTMLParser
+
+from bs4 import BeautifulSoup, Tag
 
 from ..html_text import html_to_text
 from .base import JobDetail, JobRef
 
-JOB_LINK_RE = re.compile(r'href="(/job/[^"]+?/(\d+)/?)"[^>]*>([^<]+)<')
-MORE_LOCATIONS_RE = re.compile(r"<small.*?</small>", re.S)  # "+2 more..." badge
-LOCATION_RE = re.compile(r'<span class="jobLocation">\s*(.*?)\s*</span>', re.S)
-DATE_RE = re.compile(r'<span class="jobDate">\s*(.*?)\s*</span>', re.S)
-TOTAL_RE = re.compile(r'paginationLabel.*?of\s*<b>\s*([\d,.]+)\s*</b>', re.S)
-ROW_RE = re.compile(r'<tr class="data-row.*?</tr>', re.S)
+JOB_ID_RE = re.compile(r"^/job/.+/(\d+)/?$")  # /job/<slug>/<id>/
+TOTAL_RE = re.compile(r"of\s*([\d,.]+)")
+# Not HTML: the token is set in an inline script
 CSRF_RE = re.compile(r'var CSRFToken = "([^"]+)"')
-# Job page: one span per location (the listing only shows the first, plus "+2 more")
-GEO_LOCATION_RE = re.compile(r'<span class="jobGeoLocation">(.*?)</span>\s*(?=<span class="jobGeoLocation"|</p>)', re.S)
-# Elements that never get a closing tag; they must not count towards nesting depth
-VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
-             "param", "source", "track", "wbr"}
 
 
-class _DescriptionExtractor(HTMLParser):
-    """Collects the inner HTML of every top-level element whose class or itemprop
-    marks it as the job description. Some sites split the posting into several
-    such blocks (BCV: intro, role, profile); nested markers are part of the
-    enclosing block."""
+def _text(el: Tag) -> str:
+    return " ".join(el.get_text(" ").split())
 
-    def __init__(self, classes: tuple[str, ...] = ("jobdescription",)):
-        super().__init__(convert_charrefs=False)
-        self.classes = set(classes)
-        self.depth = 0
-        self.blocks: list[str] = []
-        self.parts: list[str] = []
 
-    def handle_starttag(self, tag, attrs):
-        if self.depth:
-            if tag not in VOID_TAGS:
-                self.depth += 1
-            self.parts.append(self.get_starttag_text() or "")
-            return
-        a = dict(attrs)
-        classes = (a.get("class") or "").lower().split()
-        if a.get("itemprop") == "description" or self.classes & set(classes):
-            self.depth = 1
-            self.parts = []
-
-    def handle_startendtag(self, tag, attrs):
-        if self.depth:
-            self.parts.append(self.get_starttag_text() or "")
-
-    def handle_endtag(self, tag):
-        if not self.depth or tag in VOID_TAGS:
-            return
-        self.depth -= 1
-        if self.depth == 0:
-            self.blocks.append("".join(self.parts).strip())
-        else:
-            self.parts.append(f"</{tag}>")
-
-    def handle_data(self, data):
-        if self.depth:
-            self.parts.append(data)
-
-    def handle_entityref(self, name):
-        self.handle_data(f"&{name};")
-
-    def handle_charref(self, name):
-        self.handle_data(f"&#{name};")
+def _is_description(tag: Tag, classes: set[str]) -> bool:
+    return tag.get("itemprop") == "description" or bool(
+        classes & {c.lower() for c in tag.get("class") or []})
 
 
 def extract_description(page_html: str, classes: tuple[str, ...] = ("jobdescription",)) -> str:
     """Description HTML from elements marked itemprop="description" or carrying one
-    of `classes`. Also used for other sites with server-rendered job pages."""
-    parser = _DescriptionExtractor(classes)
-    parser.feed(page_html)
+    of `classes`. Some sites split the posting into several such blocks (BCV: intro,
+    role, profile); a marked element nested in another one is part of that block.
+    Also used for other sites with server-rendered job pages."""
+    wanted = {c.lower() for c in classes}
+    soup = BeautifulSoup(page_html, "html.parser")
     blocks = []
-    for b in parser.blocks:
-        if b and b not in blocks:  # skip repeated copies (e.g. mobile + desktop)
-            blocks.append(b)
+    for el in soup.find_all(lambda t: _is_description(t, wanted)):
+        if any(_is_description(p, wanted) for p in el.parents if isinstance(p, Tag)):
+            continue
+        html = el.decode_contents(formatter="html5").strip()
+        if html and html not in blocks:  # skip repeated copies (e.g. mobile + desktop)
+            blocks.append(html)
     return "\n".join(blocks)
 
 
 def page_locations(page_html: str) -> str:
     """All locations listed on a job page, in order, without the page's repeated copies."""
     locs = []
-    for fragment in GEO_LOCATION_RE.findall(page_html):
-        loc = html_to_text(fragment)
+    for el in BeautifulSoup(page_html, "html.parser").select("span.jobGeoLocation"):
+        loc = _text(el)
         if loc and loc not in locs:
             locs.append(loc)
     return " / ".join(locs)
@@ -165,29 +123,33 @@ class SuccessFactorsSource:
     def _list_html(self) -> Iterator[JobRef]:
         startrow, seen = 0, set()
         while True:
-            page = self.client.get_text(self._search_url(startrow))
-            rows = ROW_RE.findall(page) or [page]
+            soup = BeautifulSoup(self.client.get_text(self._search_url(startrow)), "html.parser")
+            rows = soup.select("tr.data-row")
             found = 0
-            for row in rows:
-                link = JOB_LINK_RE.search(row)
-                if not link or link.group(2) in seen:
+            for row in rows or [soup]:
+                link = row.find("a", href=JOB_ID_RE)
+                if not link or JOB_ID_RE.search(link["href"]).group(1) in seen:
                     continue
-                path, job_id, title = link.groups()
+                job_id = JOB_ID_RE.search(link["href"]).group(1)
                 seen.add(job_id)
                 found += 1
-                loc = LOCATION_RE.search(row)
-                date = DATE_RE.search(row)
+                loc = row.select_one("span.jobLocation")
+                if loc:
+                    for badge in loc.find_all("small"):  # "+2 more..." on multi-location jobs
+                        badge.decompose()
+                date = row.select_one("span.jobDate")
                 yield JobRef(
                     job_id=job_id,
-                    title=unescape(title.strip()),
-                    location=html_to_text(MORE_LOCATIONS_RE.sub("", loc.group(1))) if loc else "",
-                    url=f"{self.base_url}{unescape(path)}",
-                    posted_on=html_to_text(date.group(1)) if date else "",
+                    title=link.get_text().strip(),
+                    location=_text(loc) if loc else "",
+                    url=f"{self.base_url}{link['href']}",
+                    posted_on=_text(date) if date else "",
                 )
-            total = TOTAL_RE.search(page)
+            label = soup.select_one(".paginationLabel")
+            total = TOTAL_RE.search(label.get_text()) if label else None
             total = int(re.sub(r"\D", "", total.group(1))) if total else None
             # Advance by what the page actually returned; the site decides the page size
-            startrow += len(rows) if rows != [page] else found
+            startrow += len(rows) if rows else found
             if not found or (total is not None and startrow >= total):
                 break
 
