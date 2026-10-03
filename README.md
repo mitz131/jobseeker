@@ -37,7 +37,9 @@ jobseeker/
     runner.py            list -> diff -> fetch new, per employer
     http.py, html_text.py
     sources/             one module per career-site platform
-tests/                   mirrors the package: tests/crawler/, test_places.py
+  api/                   web API (FastAPI): app.py, refresh.py
+  config.py              config.toml and derived paths (shared)
+tests/                   mirrors the package: tests/crawler/, tests/api/, test_places.py
 ```
 
 ## How it works
@@ -113,6 +115,28 @@ region or canton is at 0 km when the starting point is one of its localities;
 
 The register is updated monthly by swisstopo; refreshing it about once a year
 is enough (municipality mergers).
+
+## Web API
+
+```bash
+jobseeker serve                        # http://127.0.0.1:8000
+jobseeker serve --host 0.0.0.0         # reachable from outside (e.g. from the sandbox host)
+```
+
+Interactive documentation: **`/docs`** (Swagger UI) and `/redoc`.
+
+| Endpoint | |
+|---|---|
+| `GET /api/jobs` | Jobs, newest first. `home` (postcode or locality) adds `distance_km`; `max_km`, `sort=distance`, `company` (repeatable), `location` (text, ignores case/accents), `include_closed`, `limit`/`offset` |
+| `GET /api/jobs/{company}/{job_id}` | One job with its description (URL-encode the id: Workday ids contain `/`) |
+| `GET /api/status` | Last update, whether it's older than 24 h, refresh state, last run per company |
+| `POST /api/refresh` | Start the batch in the background if the data is older than 24 h (`force=true`: always). One run at a time; returns immediately |
+
+A job is **open** when it was seen in its company's latest successful run;
+closed jobs stay in the database and are listed with `include_closed=true`.
+
+Run a single server process: the refresh lock doesn't reach across several
+workers.
 
 ## Daily schedule
 

@@ -1,62 +1,43 @@
-"""CLI entry point: python -m jobseeker {run,facets,list,near,places}"""
+"""CLI entry point: python -m jobseeker {run,facets,list,near,places,serve}"""
 
 import argparse
 import json
 import logging
 import sys
-import tomllib
 from collections import Counter
-from pathlib import Path
 
+from .config import Config
 from .crawler.http import HttpClient
-from .crawler.runner import run_company
+from .crawler.runner import run_all
 from .crawler.sources import build_source
 from .crawler.sources.workday import iter_facets
 from .db import JobStore, now
-from .places import Places, nearest
+from .places import distance_to_job, location_strings
 
 
-def load_config(path: str) -> dict:
-    with open(path, "rb") as f:
-        return tomllib.load(f)
+def companies_or_exit(config: Config, names: list[str] | None) -> list[dict]:
+    try:
+        return config.companies(names)
+    except ValueError as e:
+        sys.exit(str(e))
 
 
-def select_companies(config: dict, names: list[str] | None) -> list[dict]:
-    companies = [c for c in config.get("company", []) if c.get("enabled", True) or names]
-    if names:
-        companies = [c for c in companies if c["name"] in names]
-        missing = set(names) - {c["name"] for c in companies}
-        if missing:
-            sys.exit(f"Unknown company: {', '.join(sorted(missing))}")
-    return companies
-
-
-def load_places(args, config) -> Places | None:
-    settings = config.get("settings", {})
-    base = Path(args.config).parent
-    register = base / settings.get("places_register", "AMTOVZ_CSV_LV95.csv")
-    if not register.exists():
-        return None
-    places_file = base / settings.get("places_file", "places.toml")
-    return Places(str(register), str(places_file) if places_file.exists() else None)
-
-
-def location_strings(row) -> list[str]:
-    return [s.strip() for s in (row["location"] or "").split(" / ") if s.strip()]
+def places_or_exit(config: Config):
+    if not config.places:
+        sys.exit("Locality register not found; see places_register in config.toml")
+    return config.places
 
 
 def cmd_run(args, config, store, client):
-    max_new = config.get("settings", {}).get("max_new_per_company", 200)
     started = now()
-    results = [run_company(store, client, c, max_new)
-               for c in select_companies(config, args.company)]
+    results = run_all(store, client, companies_or_exit(config, args.company), config.max_new_per_company)
     print()
     for r in results:
         status = f"ERROR: {r.error}" if r.error else "ok"
         print(f"{r.company:<15} matched={r.listed:<5} new={r.new:<5} {status}")
-    places = load_places(args, config)
+    places = config.places
     if places:
-        unresolved = sorted({s for row in store.jobs_since(started) for s in location_strings(row)
+        unresolved = sorted({s for row in store.jobs_since(started) for s in location_strings(row["location"])
                              if places.resolve(s).status == "unresolved"})
         if unresolved:
             print(f"\nNew location(s) not resolved: {'; '.join(unresolved)}"
@@ -65,7 +46,7 @@ def cmd_run(args, config, store, client):
 
 
 def cmd_facets(args, config, store, client):
-    for company in select_companies(config, [args.company]):
+    for company in companies_or_exit(config, [args.company]):
         source = build_source(client, company)
         if not hasattr(source, "available_facets"):
             sys.exit(f"{company['name']}: facets are only supported for Workday sources")
@@ -92,10 +73,8 @@ def cmd_list(args, config, store, client):
 
 
 def cmd_places(args, config, store, client):
-    places = load_places(args, config)
-    if not places:
-        sys.exit("Locality register not found; see places_register in config.toml")
-    counts = Counter(s for row in store.jobs_since("0000") for s in location_strings(row))
+    places = places_or_exit(config)
+    counts = Counter(s for row in store.jobs_since("0000") for s in location_strings(row["location"]))
     order = {"unresolved": 0, "unknown": 1, "ok": 2}
     shown = 0
     for raw, n in sorted(counts.items(), key=lambda kv: (order[places.resolve(kv[0]).status], kv[0])):
@@ -112,38 +91,36 @@ def cmd_places(args, config, store, client):
 
 
 def cmd_near(args, config, store, client):
-    places = load_places(args, config)
-    if not places:
-        sys.exit("Locality register not found; see places_register in config.toml")
+    places = places_or_exit(config)
     try:
         home = places.resolve_home(args.home)
     except ValueError as e:
         sys.exit(str(e))
     found, unknown = [], []
     for row in store.jobs_since(args.since, args.company):
-        # Remember which location string each place came from, so a canton- or
-        # region-wide match is shown as such rather than as a specific town
-        origin = {}
-        for s in location_strings(row):
-            res = places.resolve(s)
-            for p in res.places:
-                origin.setdefault(p, res.note if len(res.places) > 1 else "")
-        hit = nearest(home, list(origin))
-        if hit is None:
+        match = distance_to_job(places, home, row["location"])
+        if match is None:
             unknown.append(row)
-        elif args.max_km is None or hit[0] <= args.max_km:
-            found.append((hit[0], hit[1], origin[hit[1]], row))
-    found.sort(key=lambda f: (f[0], f[3]["company"], f[3]["title"]))
+        elif args.max_km is None or match.km <= args.max_km:
+            found.append((match, row))
+    found.sort(key=lambda f: (f[0].km, f[1]["company"], f[1]["title"]))
     print(f"From {home.name} ({home.canton})\n")
-    for km, place, via, row in found:
-        where = f"{place.name}, via {via}" if via else place.name
-        print(f"{km:6.1f} km  {row['company']:<13} {row['title']}  [{where}]")
+    for match, row in found:
+        print(f"{match.km:6.1f} km  {row['company']:<13} {row['title']}  [{match.label}]")
         print(f"            {row['url']}")
     print(f"\n{len(found)} job(s)" + (f" within {args.max_km:g} km" if args.max_km is not None else ""))
     if unknown and not args.hide_unknown:
         print(f"\nLocation unknown ({len(unknown)}):")
         for row in unknown:
             print(f"            {row['company']:<13} {row['title']}  [{row['location']}]")
+    return 0
+
+
+def cmd_serve(args, config):
+    import uvicorn
+
+    from .api.app import create_app
+    uvicorn.run(create_app(config), host=args.host, port=args.port)
     return 0
 
 
@@ -175,24 +152,25 @@ def main(argv=None) -> int:
     pl = sub.add_parser("places", help="show how job locations resolve to places")
     pl.add_argument("--unresolved", action="store_true", help="only strings that need places.toml")
 
+    sv = sub.add_parser("serve", help="start the web API (and, later, the web page)")
+    sv.add_argument("--host", default="127.0.0.1", help="0.0.0.0 to accept connections from outside")
+    sv.add_argument("--port", type=int, default=8000)
+
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
 
-    config = load_config(args.config)
-    settings = config.get("settings", {})
-    db_path = Path(args.config).parent / settings.get("db_path", "jobs.db")
-    db_path.parent.mkdir(parents=True, exist_ok=True)  # data/ is not in git
-    store = JobStore(str(db_path))
-    client = HttpClient(delay=settings.get("request_delay", 0.5))
+    config = Config.load(args.config)
+    if args.cmd == "serve":
+        return cmd_serve(args, config)
+    store = JobStore(str(config.db_path))
+    client = HttpClient(delay=config.request_delay)
     try:
         commands = {"run": cmd_run, "facets": cmd_facets, "list": cmd_list,
                     "near": cmd_near, "places": cmd_places}
-        return commands[args.cmd](
-            args, config, store, client)
+        return commands[args.cmd](args, config, store, client)
     finally:
         store.close()
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -69,3 +69,8 @@ def run_company(store: JobStore, client, company: dict, max_new: int) -> Company
         result.error = str(e)
     store.finish_run(run_id, result.listed, result.new, result.error)
     return result
+
+
+def run_all(store: JobStore, client, companies: list[dict], max_new: int) -> list[CompanyResult]:
+    """The batch: every company in turn; one company failing doesn't stop the others."""
+    return [run_company(store, client, company, max_new) for company in companies]

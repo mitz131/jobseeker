@@ -50,7 +50,8 @@ class JobStore:
 
     @staticmethod
     def _open(target: str, uri: bool = False) -> sqlite3.Connection:
-        conn = sqlite3.connect(target, uri=uri)
+        # A reader (the web API) may meet the background batch mid-write: wait for it
+        conn = sqlite3.connect(target, uri=uri, timeout=30)
         conn.row_factory = sqlite3.Row
         conn.executescript(SCHEMA)
         return conn
@@ -100,3 +101,33 @@ class JobStore:
             sql += " AND company = ?"
             args.append(company)
         return self.conn.execute(sql + " ORDER BY first_seen DESC, company", args).fetchall()
+
+    def all_jobs(self) -> list[sqlite3.Row]:
+        """Every stored job, without the bulky description, HTML and raw payload."""
+        return self.conn.execute(
+            """SELECT company, job_id, title, location, url, posted_on, first_seen, last_seen
+               FROM jobs ORDER BY first_seen DESC, company, title""").fetchall()
+
+    def get_job(self, company: str, job_id: str) -> sqlite3.Row | None:
+        return self.conn.execute("SELECT * FROM jobs WHERE company = ? AND job_id = ?",
+                                 (company, job_id)).fetchone()
+
+    def last_good_run_starts(self) -> dict[str, str]:
+        """Start of each company's latest successful run. A job seen in that run
+        (last_seen >= its start) is still open."""
+        rows = self.conn.execute(
+            """SELECT company, MAX(started_at) FROM runs
+               WHERE finished_at IS NOT NULL AND error IS NULL GROUP BY company""")
+        return {company: started for company, started in rows}
+
+    def latest_runs(self) -> list[sqlite3.Row]:
+        """Each company's most recent run, successful or not."""
+        return self.conn.execute(
+            """SELECT r.* FROM runs r
+               JOIN (SELECT company, MAX(id) AS id FROM runs GROUP BY company) last USING (id)
+               ORDER BY r.company""").fetchall()
+
+    def last_update(self) -> str | None:
+        """When the most recent successful company run finished."""
+        return self.conn.execute(
+            "SELECT MAX(finished_at) FROM runs WHERE error IS NULL").fetchone()[0]

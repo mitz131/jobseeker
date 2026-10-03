@@ -10,10 +10,12 @@ requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
     "beautifulsoup4>=4.12",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "httpx2"]  # httpx2: for FastAPI's TestClient
 
 [project.scripts]
 jobseeker = "jobseeker.__main__:main"

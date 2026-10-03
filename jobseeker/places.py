@@ -251,3 +251,32 @@ def nearest(home: Place, places: list[Place]) -> tuple[float, Place] | None:
         return None
     best = min(places, key=home.km_to)
     return home.km_to(best), best
+
+
+def location_strings(location: str | None) -> list[str]:
+    """A job's location field, split into its locations ("A / B")."""
+    return [s.strip() for s in (location or "").split(" / ") if s.strip()]
+
+
+@dataclass(frozen=True)
+class Match:
+    km: float
+    place: Place
+    via: str  # e.g. "cantons BE, AG" when the place stands for a wider area, else ""
+
+    @property
+    def label(self) -> str:
+        return f"{self.place.name}, via {self.via}" if self.via else self.place.name
+
+
+def distance_to_job(places: "Places", home: Place, location: str | None) -> Match | None:
+    """Nearest of the job's locations, or None when none of them has a point."""
+    # Remember which location string each place came from, so a canton- or
+    # region-wide match is shown as such rather than as a specific town
+    origin: dict[Place, str] = {}
+    for raw in location_strings(location):
+        res = places.resolve(raw)
+        for place in res.places:
+            origin.setdefault(place, res.note if len(res.places) > 1 else "")
+    hit = nearest(home, list(origin))
+    return Match(hit[0], hit[1], origin[hit[1]]) if hit else None
