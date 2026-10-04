@@ -26,6 +26,7 @@ and save it as `data/AMTOVZ_CSV_LV95.csv`.
 ```
 config.toml              employers and settings (hand-edited)
 places.toml              location aliases and regions (hand-edited)
+labels.toml              labelling question sets and backends (hand-edited)
 data/                    generated / downloaded files
   jobs.db                the job database
   AMTOVZ_CSV_LV95.csv    swisstopo locality register
@@ -38,6 +39,7 @@ jobseeker/
     http.py, html_text.py
     sources/             one module per career-site platform
   api/                   web API (FastAPI): app.py, refresh.py
+  labeling/              question sets, /v1/systemone client, label runs, comparison
   config.py              config.toml and derived paths (shared)
 tests/                   mirrors the package: tests/crawler/, tests/api/, test_places.py
 frontend/
@@ -119,6 +121,33 @@ region or canton is at 0 km when the starting point is one of its localities;
 
 The register is updated monthly by swisstopo; refreshing it about once a year
 is enough (municipality mergers).
+
+## Labelling with decision models
+
+`labels.toml` defines **question sets** (e.g. `v1`: seniority, job family,
+computer engineering, employment type, required languages, work model...) and
+**backends**: any server speaking the `/v1/systemone` API (KEV's own server,
+llama.cpp / llama.app with a KEV GGUF, the Jev API).
+
+```bash
+jobseeker labels run kev4b                       # label all stored jobs
+jobseeker labels run kev4b --company salt --note "salt only"
+jobseeker labels import claude.json --model claude-opus-5-5   # answers without probabilities
+jobseeker labels runs                            # list runs
+jobseeker labels compare 3 1                     # agreement per question, run 3 vs run 1
+jobseeker labels show 3 --company salt
+```
+
+Every run records the backend, a snapshot of the model it served (`/v1/models`),
+the question set and the **input recipe** (`full`: title, location and the whole
+description; a shortened text was tried and dropped, since requirements such as
+languages usually come at the end of an ad). Runs are only compared
+within the same question set. A question set is frozen once used: edit it under
+a new name (`v2`), otherwise `labels run` refuses.
+
+Answers are stored with their probabilities; "unknown" is decided when reading,
+from a probability threshold, so it can change without relabelling. `compare`
+also shows agreement for answers above probability thresholds (0.5 / 0.7 / 0.9).
 
 ## Web page and API
 

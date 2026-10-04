@@ -59,3 +59,12 @@ class Config:
             return None
         places_file = self._file("places_file", "places.toml")
         return Places(str(register), str(places_file) if places_file.exists() else None)
+
+    @cached_property
+    def labels(self) -> dict:
+        """labels.toml: question sets and labelling backends (empty if absent)."""
+        path = self._file("labels_file", "labels.toml")
+        if not path.exists():
+            return {}
+        with open(path, "rb") as f:
+            return tomllib.load(f)

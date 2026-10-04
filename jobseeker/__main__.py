@@ -1,8 +1,9 @@
-"""CLI entry point: python -m jobseeker {run,facets,list,near,places,serve}"""
+"""CLI entry point: python -m jobseeker {run,facets,list,near,places,labels,serve}"""
 
 import argparse
 import json
 import logging
+import os
 import sys
 from collections import Counter
 
@@ -12,6 +13,10 @@ from .crawler.runner import run_all
 from .crawler.sources import build_source
 from .crawler.sources.workday import iter_facets
 from .db import JobStore, now
+from .labeling.compare import compare_runs
+from .labeling.questions import load_question_set
+from .labeling.runner import INPUT_RECIPES, SystemOneClient, import_labels, label_jobs, select_jobs
+from .labeling.store import LabelStore
 from .places import distance_to_job, location_strings
 
 
@@ -116,6 +121,111 @@ def cmd_near(args, config, store, client):
     return 0
 
 
+def read_job_keys(path: str) -> list[tuple[str, str]]:
+    """One job per line: company, whitespace, job id (ids may contain "/")."""
+    keys = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if line.strip() and not line.startswith("#"):
+                company, job_id = line.strip().split(None, 1)
+                keys.append((company, job_id))
+    return keys
+
+
+def cmd_labels(args, config, store, client):
+    labels = LabelStore(store.conn)
+    try:
+        if args.labels_cmd == "run":
+            return labels_run(args, config, store, labels)
+        if args.labels_cmd == "import":
+            return labels_import(args, config, store, labels)
+        if args.labels_cmd == "runs":
+            return labels_runs(labels)
+        if args.labels_cmd == "compare":
+            return labels_compare(args, labels)
+        if args.labels_cmd == "show":
+            return labels_show(args, store, labels)
+    except ValueError as e:
+        sys.exit(str(e))
+    return 0
+
+
+def labels_run(args, config, store, labels):
+    backends = config.labels.get("backends", {})
+    if args.backend not in backends:
+        sys.exit(f"Unknown backend {args.backend!r}; defined in labels.toml: {', '.join(backends) or 'none'}")
+    spec = backends[args.backend]
+    api_key = os.environ.get(spec["api_key_env"]) if spec.get("api_key_env") else None
+    if spec.get("api_key_env") and not api_key:
+        sys.exit(f"Backend {args.backend!r} needs an API key in the environment variable {spec['api_key_env']}")
+    qs = load_question_set(config.labels, args.questions)
+    keys = read_job_keys(args.jobs) if args.jobs else None
+    jobs = select_jobs(store.conn, args.company, keys, args.limit)
+    if not jobs:
+        sys.exit("No jobs selected")
+    client_ = SystemOneClient(spec["url"], spec.get("model", "kev-latest"), api_key)
+    print(f"Labelling {len(jobs)} job(s) with {args.backend} ({spec['url']}), questions {qs.name}, input {args.input}")
+    progress = lambda i, n: print(f"  {i}/{n}", flush=True) if i % 25 == 0 or i == n else None
+    result = label_jobs(labels, client_, qs, args.input, jobs, args.backend, args.note, progress)
+    print(f"Run {result.run_id}: {result.labeled} labelled, {result.failed} failed"
+          + (f" ({result.error})" if result.error else ""))
+    return 1 if result.error or not result.labeled else 0
+
+
+def labels_import(args, config, store, labels):
+    qs = load_question_set(config.labels, args.questions)
+    with open(args.file, encoding="utf-8") as f:
+        items = json.load(f)
+    items = items.get("labels", items) if isinstance(items, dict) else items
+    result = import_labels(labels, store.conn, qs, items, args.backend, args.model, args.input, args.note)
+    print(f"Run {result.run_id}: {result.labeled} imported, {result.failed} rejected")
+    return 0 if result.labeled else 1
+
+
+def labels_runs(labels):
+    runs = labels.runs()
+    for r in runs:
+        print(f"{r['id']:>4}  {r['started_at'][:16]}  {r['backend']:<10} {(r['model'] or ''):<28} "
+              f"{r['question_set']:<5} {r['input_recipe']:<9} {r['status']:<8} "
+              f"{r['labeled']:>4} ok {r['failed']:>3} failed  {r['note'] or ''}".rstrip())
+    print(f"\n{len(runs)} run(s)")
+    return 0
+
+
+def labels_compare(args, labels):
+    results = compare_runs(labels, args.run_a, args.run_b)  # raises for unknown or mismatched runs
+    a, b = labels.run(args.run_a), labels.run(args.run_b)
+    print(f"Run {args.run_a} ({a['backend']}, {a['model']}) vs run {args.run_b} ({b['backend']}, {b['model']}), "
+          f"question set {a['question_set']}\n")
+    for r in results:
+        agree = f"{r.agreement:6.0%}" if r.agreement is not None else "     -"
+        diffs = ", ".join(f"{x}->{y} ({n})" for (x, y), n in r.differences)
+        print(f"{r.question:<22} {agree} of {r.common:<4} {diffs}")
+        for t, (n, ok) in r.by_confidence.items():
+            if n:
+                print(f"{'':<22}   run {args.run_a} p >= {t:.1f}: {ok / n:4.0%} agree on {n} ({n / r.common:.0%} of jobs)")
+    return 0
+
+
+def labels_show(args, store, labels):
+    run = labels.run(args.run)
+    if run is None:
+        sys.exit(f"No label run {args.run}")
+    titles = {(r["company"], r["job_id"]): r["title"] for r in store.conn.execute("SELECT company, job_id, title FROM jobs")}
+    shown = 0
+    for (company, job_id), answers in sorted(labels.labels(args.run).items()):
+        if args.company and company != args.company:
+            continue
+        print(f"{company:<13} {titles.get((company, job_id), '?')}")
+        for q, row in answers.items():
+            p = f" ({row['probability']:.2f})" if row["probability"] is not None else ""
+            print(f"{'':<15}{q:<22} {row['answer']}{p}")
+        shown += 1
+        if args.limit and shown >= args.limit:
+            break
+    return 0
+
+
 def cmd_serve(args, config):
     import uvicorn
 
@@ -152,6 +262,32 @@ def main(argv=None) -> int:
     pl = sub.add_parser("places", help="show how job locations resolve to places")
     pl.add_argument("--unresolved", action="store_true", help="only strings that need places.toml")
 
+    lb = sub.add_parser("labels", help="label jobs with a decision model; compare label runs")
+    lsub = lb.add_subparsers(dest="labels_cmd", required=True)
+    lr = lsub.add_parser("run", help="label jobs with a backend from labels.toml")
+    lr.add_argument("backend")
+    lr.add_argument("--questions", default="v1", help="question set (default: v1)")
+    lr.add_argument("--input", default="full", choices=list(INPUT_RECIPES), help="what the model reads (default: full)")
+    lr.add_argument("--company", action="append", help="only this company (repeatable)")
+    lr.add_argument("--jobs", help="file with one 'company job_id' per line")
+    lr.add_argument("--limit", type=int, help="at most this many jobs")
+    lr.add_argument("--note")
+    li = lsub.add_parser("import", help="import answers without probabilities (Claude, human)")
+    li.add_argument("file", help='JSON: [{"company", "job_id", "answers": {question: answer}}]')
+    li.add_argument("--backend", default="claude")
+    li.add_argument("--model", required=True, help='e.g. "claude-opus-5-5"')
+    li.add_argument("--questions", default="v1")
+    li.add_argument("--input", default="full", help="what the labeller read (default: full)")
+    li.add_argument("--note")
+    lsub.add_parser("runs", help="list label runs")
+    lc = lsub.add_parser("compare", help="agreement between two runs, per question")
+    lc.add_argument("run_a", type=int)
+    lc.add_argument("run_b", type=int)
+    lw = lsub.add_parser("show", help="show the labels of a run")
+    lw.add_argument("run", type=int)
+    lw.add_argument("--company")
+    lw.add_argument("--limit", type=int)
+
     sv = sub.add_parser("serve", help="start the web API (and, later, the web page)")
     sv.add_argument("--host", default="127.0.0.1", help="0.0.0.0 to accept connections from outside")
     sv.add_argument("--port", type=int, default=8090, help="default: 8090")
@@ -167,7 +303,7 @@ def main(argv=None) -> int:
     client = HttpClient(delay=config.request_delay)
     try:
         commands = {"run": cmd_run, "facets": cmd_facets, "list": cmd_list,
-                    "near": cmd_near, "places": cmd_places}
+                    "near": cmd_near, "places": cmd_places, "labels": cmd_labels}
         return commands[args.cmd](args, config, store, client)
     finally:
         store.close()

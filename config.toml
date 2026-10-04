@@ -4,6 +4,7 @@ request_delay = 0.5              # seconds between HTTP requests
 max_new_per_company = 200        # cap detail fetches per run; the rest are picked up next run
 places_register = "data/AMTOVZ_CSV_LV95.csv"   # swisstopo locality register, for `near` / `places`
 places_file = "places.toml"               # hand-edited aliases and regions
+labels_file = "labels.toml"               # question sets and labelling backends
 
 # --- Filters -------------------------------------------------------------
 # search            : sent to the site's own search (server-side)

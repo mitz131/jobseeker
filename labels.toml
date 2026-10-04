@@ -1,0 +1,93 @@
+# Labelling: question sets and the backends that answer them.
+#
+# A question set is frozen once it has been used: changing a wording, an option
+# or the order of options changes the answers, so give the changed set a new
+# name (v2, ...). `jobseeker labels run` refuses to run an edited set under an
+# old name.
+#
+# Question types (KEV / Jev /v1/systemone):
+#   choice : pick one option; `options` maps option key -> description the model sees.
+#            Option order matters and is kept as written here.
+#   noul   : yes/no; stored as "yes"/"no" with the probability of that answer.
+
+[backends.kev4b]
+# Jared Palmer's KEV server on the Windows host (python -m kev.serve --port 8009)
+url = "http://host.docker.internal:8009"
+model = "kev-latest"
+# api_key_env = "KEV_API_KEY"     # name of an environment variable holding a bearer token
+
+# [backends.kev9b_q4]             # llama.app / llama-server with ggml-org/Kev-9B-GGUF
+# url = "http://host.docker.internal:8010"
+# model = "kev-latest"
+
+# [backends.jev]                  # paid Jev API (costs per request)
+# url = "https://..."
+# model = "..."
+# api_key_env = "JEV_API_KEY"
+
+
+[question_sets.v1.seniority]
+type = "choice"
+instructions = "What seniority level does this job ad ask for?"
+[question_sets.v1.seniority.options]
+junior = "Entry level, graduates, or up to about 2 years of experience"
+mid = "Experienced professional with about 3 to 6 years of experience, no lead role"
+senior = "Senior, lead or principal individual contributor, or team lead"
+director = "Director, head of department, vice president or executive"
+
+[question_sets.v1.people_management]
+type = "noul"
+instructions = "Does this job involve managing people, i.e. leading a team of direct reports?"
+
+[question_sets.v1.job_family]
+type = "choice"
+instructions = "Which job family does this job belong to?"
+[question_sets.v1.job_family.options]
+software_it = "Software development, IT, IT operations, infrastructure, DevOps, IT security, IT support"
+data_ai = "Data analysis, data engineering, machine learning, AI"
+engineering_technical = "Engineering and technical roles outside IT: mechanical, electrical, process, automation, maintenance"
+science_research = "Research and laboratory science"
+teaching = "Teaching at any level"
+health_social = "Health care, psychology, social work, education support such as educators or guardianship officers"
+sales = "Sales, business development, account management"
+customer_service = "Customer service and customer support that is not technical"
+marketing_design = "Marketing, communication, brand, product and UX design"
+corporate_functions = "Finance, accounting, HR, legal, compliance, procurement, administration, assistants"
+production_supply_chain = "Manufacturing, production lines, logistics, warehouse, supply chain, quality control; not IT operations"
+retail = "Shop and store staff"
+other = "None of the above"
+
+[question_sets.v1.computer_engineering]
+type = "noul"
+instructions = "Is this a job a computer engineer would be hired for, such as software, IT or data engineering?"
+
+[question_sets.v1.employment_type]
+type = "choice"
+instructions = "What type of employment does this job ad offer?"
+[question_sets.v1.employment_type.options]
+permanent = "Permanent position (open-ended contract)"
+fixed_term = "Fixed-term contract for a limited period"
+internship = "Internship or traineeship"
+apprenticeship = "Apprenticeship or vocational training position"
+temporary = "Temporary, interim or replacement assignment"
+
+[question_sets.v1.french_required]
+type = "noul"
+instructions = "Does the ad state French as a requirement? A language that is only an advantage or nice to have does not count."
+
+[question_sets.v1.german_required]
+type = "noul"
+instructions = "Does the ad state German as a requirement? A language that is only an advantage or nice to have does not count."
+
+[question_sets.v1.english_required]
+type = "noul"
+instructions = "Does the ad state English as a requirement? A language that is only an advantage or nice to have does not count."
+
+[question_sets.v1.work_model]
+type = "choice"
+instructions = "What work model does the ad describe?"
+[question_sets.v1.work_model.options]
+on_site = "Work on site at the employer's premises"
+hybrid = "Hybrid: partly on site, partly remote"
+remote = "Fully remote"
+not_stated = "The ad does not say"
