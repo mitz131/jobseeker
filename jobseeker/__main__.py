@@ -14,7 +14,7 @@ from .crawler.sources import build_source
 from .crawler.sources.workday import iter_facets
 from .db import JobStore, now
 from .labeling.compare import compare_runs
-from .labeling.questions import load_question_set
+from .labeling.questions import load_question_set, load_thresholds
 from .labeling.runner import INPUT_RECIPES, SystemOneClient, import_labels, label_jobs, select_jobs
 from .labeling.store import LabelStore
 from .places import distance_to_job, location_strings
@@ -142,9 +142,9 @@ def cmd_labels(args, config, store, client):
         if args.labels_cmd == "runs":
             return labels_runs(labels)
         if args.labels_cmd == "compare":
-            return labels_compare(args, labels)
+            return labels_compare(args, config, labels)
         if args.labels_cmd == "show":
-            return labels_show(args, store, labels)
+            return labels_show(args, config, store, labels)
     except ValueError as e:
         sys.exit(str(e))
     return 0
@@ -192,11 +192,28 @@ def labels_runs(labels):
     return 0
 
 
-def labels_compare(args, labels):
-    results = compare_runs(labels, args.run_a, args.run_b)  # raises for unknown or mismatched runs
+def run_thresholds(config, run, raw: bool) -> dict[str, float]:
+    """The labels.toml thresholds for this run's backend and question set ({} with --raw)."""
+    if raw or run["question_set"] not in config.labels.get("question_sets", {}):
+        return {}
+    return load_thresholds(config.labels, run["backend"], load_question_set(config.labels, run["question_set"]))
+
+
+def describe_thresholds(run_id: int, thresholds: dict[str, float]) -> str:
+    return f"run {run_id} yes if p >= " + ", ".join(f"{q} {t:g}" for q, t in thresholds.items())
+
+
+def labels_compare(args, config, labels):
     a, b = labels.run(args.run_a), labels.run(args.run_b)
+    thresholds = {run_id: run_thresholds(config, run, args.raw)
+                  for run_id, run in ((args.run_a, a), (args.run_b, b)) if run is not None}
+    results = compare_runs(labels, args.run_a, args.run_b, thresholds=thresholds)  # raises for unknown or mismatched runs
     print(f"Run {args.run_a} ({a['backend']}, {a['model']}) vs run {args.run_b} ({b['backend']}, {b['model']}), "
-          f"question set {a['question_set']}\n")
+          f"question set {a['question_set']}")
+    for run_id, t in thresholds.items():
+        if t:
+            print(describe_thresholds(run_id, t))
+    print()
     for r in results:
         agree = f"{r.agreement:6.0%}" if r.agreement is not None else "     -"
         diffs = ", ".join(f"{x}->{y} ({n})" for (x, y), n in r.differences)
@@ -207,19 +224,23 @@ def labels_compare(args, labels):
     return 0
 
 
-def labels_show(args, store, labels):
+def labels_show(args, config, store, labels):
     run = labels.run(args.run)
     if run is None:
         sys.exit(f"No label run {args.run}")
+    thresholds = run_thresholds(config, run, args.raw)
+    if thresholds:
+        print(describe_thresholds(args.run, thresholds) + "  (* = differs from the stored answer)\n")
     titles = {(r["company"], r["job_id"]): r["title"] for r in store.conn.execute("SELECT company, job_id, title FROM jobs")}
     shown = 0
-    for (company, job_id), answers in sorted(labels.labels(args.run).items()):
+    for (company, job_id), answers in sorted(labels.labels(args.run, thresholds).items()):
         if args.company and company != args.company:
             continue
         print(f"{company:<13} {titles.get((company, job_id), '?')}")
         for q, row in answers.items():
             p = f" ({row['probability']:.2f})" if row["probability"] is not None else ""
-            print(f"{'':<15}{q:<22} {row['answer']}{p}")
+            moved = " *" if row["answer"] != row["stored_answer"] else ""
+            print(f"{'':<15}{q:<22} {row['answer']}{p}{moved}")
         shown += 1
         if args.limit and shown >= args.limit:
             break
@@ -283,10 +304,12 @@ def main(argv=None) -> int:
     lc = lsub.add_parser("compare", help="agreement between two runs, per question")
     lc.add_argument("run_a", type=int)
     lc.add_argument("run_b", type=int)
+    lc.add_argument("--raw", action="store_true", help="stored answers, without labels.toml thresholds")
     lw = lsub.add_parser("show", help="show the labels of a run")
     lw.add_argument("run", type=int)
     lw.add_argument("--company")
     lw.add_argument("--limit", type=int)
+    lw.add_argument("--raw", action="store_true", help="stored answers, without labels.toml thresholds")
 
     sv = sub.add_parser("serve", help="start the web API (and, later, the web page)")
     sv.add_argument("--host", default="127.0.0.1", help="0.0.0.0 to accept connections from outside")

@@ -4,7 +4,7 @@ import pytest
 
 from jobseeker.db import JobStore
 from jobseeker.labeling.compare import compare_runs
-from jobseeker.labeling.questions import load_question_set, parse_answer
+from jobseeker.labeling.questions import load_question_set, load_thresholds, parse_answer
 from jobseeker.labeling.runner import import_labels, label_jobs, select_jobs
 from jobseeker.labeling.store import LabelStore
 
@@ -147,6 +147,48 @@ def test_import_and_compare(db):
     # KEV was 0.9 sure on the engineering titles, 0.6 on the shop assistant
     assert by_q["seniority"].by_confidence[0.7] == (2, 1)
     assert compare_runs(labels, claude.run_id, kev.run_id)[0].by_confidence == {}  # imported: no probabilities
+
+
+def test_thresholds_apply_when_reading_and_keep_stored_answers(db):
+    store, labels = db
+    qs = load_question_set(CONFIG, "t1")
+    kev = label_jobs(labels, FakeKev(), qs, "full", select_jobs(store.conn), "kev4b")  # engineering p(yes) 0.95 / 0.2
+    plain = labels.labels(kev.run_id)
+    assert plain[("acme", "/job/0")]["engineering"]["answer"] == "yes"
+
+    strict = labels.labels(kev.run_id, {"engineering": 0.99})
+    job0 = strict[("acme", "/job/0")]["engineering"]
+    assert (job0["answer"], round(job0["probability"], 2), job0["stored_answer"]) == ("no", 0.05, "yes")
+    assert strict[("acme", "/job/0")]["seniority"]["answer"] == "senior"  # choice questions untouched
+
+    lenient = labels.labels(kev.run_id, {"engineering": 0.1})
+    assert all(a["engineering"]["answer"] == "yes" for a in lenient.values())
+
+    claude = import_labels(labels, store.conn, qs, [
+        {"company": "acme", "job_id": "/job/0", "answers": {"seniority": "senior", "engineering": "yes"}},
+    ], backend="claude", model="claude-opus-5-5", recipe="full")
+    assert labels.labels(claude.run_id, {"engineering": 0.99})[("acme", "/job/0")]["engineering"]["answer"] == "yes"
+    by_q = {r.question: r for r in compare_runs(labels, kev.run_id, claude.run_id,
+                                                thresholds={kev.run_id: {"engineering": 0.99}})}
+    assert by_q["engineering"].differences == [(("no", "yes"), 1)]
+
+
+@pytest.mark.parametrize("thresholds, message", [
+    ({"seniority": 0.6}, "not a yes/no question"),
+    ({"nope": 0.6}, "not a yes/no question"),
+    ({"engineering": 1.5}, "between 0 and 1"),
+])
+def test_invalid_thresholds_are_rejected(thresholds, message):
+    config = dict(CONFIG, backends={"kev4b": {"thresholds": {"t1": thresholds}}})
+    with pytest.raises(ValueError, match=message):
+        load_thresholds(config, "kev4b", load_question_set(config, "t1"))
+
+
+def test_thresholds_are_per_backend_and_question_set():
+    config = dict(CONFIG, backends={"kev4b": {"thresholds": {"t1": {"engineering": 0.7}}}})
+    qs = load_question_set(config, "t1")
+    assert load_thresholds(config, "kev4b", qs) == {"engineering": 0.7}
+    assert load_thresholds(config, "claude", qs) == {}
 
 
 def test_runs_of_different_question_sets_are_not_compared(db):

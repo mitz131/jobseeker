@@ -24,7 +24,9 @@ class QuestionComparison:
         return self.agree / self.common if self.common else None
 
 
-def compare_runs(labels: LabelStore, run_a: int, run_b: int, top: int = 3) -> list[QuestionComparison]:
+def compare_runs(labels: LabelStore, run_a: int, run_b: int, top: int = 3,
+                 thresholds: dict[int, dict[str, float]] | None = None) -> list[QuestionComparison]:
+    """thresholds: {run_id: {question: p}} applied to that run's yes/no answers (see LabelStore.labels)."""
     a, b = labels.run(run_a), labels.run(run_b)
     for run_id, run in ((run_a, a), (run_b, b)):
         if run is None:
@@ -34,7 +36,8 @@ def compare_runs(labels: LabelStore, run_a: int, run_b: int, top: int = 3) -> li
                          "only runs of the same question set can be compared")
     definition = json.loads(labels.conn.execute(
         "SELECT definition FROM question_sets WHERE name = ?", (a["question_set"],)).fetchone()[0])
-    la, lb = labels.labels(run_a), labels.labels(run_b)
+    thresholds = thresholds or {}
+    la, lb = labels.labels(run_a, thresholds.get(run_a)), labels.labels(run_b, thresholds.get(run_b))
     jobs = sorted(set(la) & set(lb))
 
     out = []

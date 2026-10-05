@@ -106,9 +106,19 @@ class LabelStore:
     def run(self, run_id: int) -> sqlite3.Row | None:
         return self.conn.execute("SELECT * FROM label_runs WHERE id = ?", (run_id,)).fetchone()
 
-    def labels(self, run_id: int) -> dict[tuple[str, str], dict[str, sqlite3.Row]]:
-        """{(company, job_id): {question: row}} for one run."""
-        out: dict[tuple[str, str], dict[str, sqlite3.Row]] = {}
+    def labels(self, run_id: int, thresholds: dict[str, float] | None = None) -> dict[tuple[str, str], dict[str, dict]]:
+        """{(company, job_id): {question: row as dict}} for one run.
+
+        With thresholds ({question: p}), a yes/no answer is yes only if p(yes) >= p; the
+        stored answer stays as the model gave it and is kept as `stored_answer`."""
+        out: dict[tuple[str, str], dict[str, dict]] = {}
         for row in self.conn.execute("SELECT * FROM job_labels WHERE run_id = ?", (run_id,)):
-            out.setdefault((row["company"], row["job_id"]), {})[row["question"]] = row
+            label = dict(row)
+            label["stored_answer"] = label["answer"]
+            t = (thresholds or {}).get(label["question"])
+            if t is not None and label["probabilities"]:
+                p_yes = json.loads(label["probabilities"])["yes"]
+                label["answer"] = "yes" if p_yes >= t else "no"
+                label["probability"] = p_yes if label["answer"] == "yes" else 1 - p_yes
+            out.setdefault((row["company"], row["job_id"]), {})[row["question"]] = label
         return out

@@ -68,6 +68,20 @@ def load_question_set(labels_config: dict, name: str) -> QuestionSet:
     return QuestionSet(name, questions)
 
 
+def load_thresholds(labels_config: dict, backend: str, qs: QuestionSet) -> dict[str, float]:
+    """Yes thresholds for one backend answering one question set, from
+    [backends.<backend>.thresholds.<set>] in labels.toml: {question: p}, where a yes/no
+    answer counts as yes only if p(yes) >= p. Empty when none are set (plain argmax)."""
+    raw = labels_config.get("backends", {}).get(backend, {}).get("thresholds", {}).get(qs.name, {})
+    for key, t in raw.items():
+        q = qs.questions.get(key)
+        if q is None or q.type != "noul":
+            raise ValueError(f"{backend} thresholds for {qs.name}: {key!r} is not a yes/no question of the set")
+        if not isinstance(t, (int, float)) or not 0 < t < 1:
+            raise ValueError(f"{backend} thresholds for {qs.name}.{key}: {t!r} must be between 0 and 1")
+    return {k: float(t) for k, t in raw.items()}
+
+
 @dataclass(frozen=True)
 class Answer:
     answer: str  # option key, or "yes"/"no"

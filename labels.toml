@@ -16,6 +16,15 @@ url = "http://host.docker.internal:8009"
 model = "kev-latest"
 # api_key_env = "KEV_API_KEY"     # name of an environment variable holding a bearer token
 
+# Yes/no questions: answer yes only if p(yes) >= threshold (default: the model's own
+# answer, i.e. 0.5). Applied when labels are read; stored answers are not changed.
+# Per question set, since a threshold fits one model answering one wording.
+# v2 values chosen against the Claude baseline (run 6 vs run 5, 349 ads).
+[backends.kev4b.thresholds.v2]
+french_required = 0.65       # 85% -> 99%: unstated French on teaching ads came out at p 0.50-0.65
+computer_engineering = 0.65  # 95% -> 99%
+people_management = 0.7      # 97% -> 98%
+
 # [backends.kev9b_q4]             # llama.app / llama-server with ggml-org/Kev-9B-GGUF
 # url = "http://host.docker.internal:8010"
 # model = "kev-latest"
