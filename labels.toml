@@ -37,6 +37,12 @@ french_required = 0.65
 computer_engineering = 0.65
 people_management = 0.7
 
+[backends.kev9b]
+# Kev-9B on the same KEV server and port (start-kev-9b.ps1); only one model fits on the GPU at a time.
+# Its own name so runs and thresholds are not mixed up with kev4b.
+url = "http://host.docker.internal:8009"
+model = "kev-latest"
+
 # [backends.kev9b_q4]             # llama.app / llama-server with ggml-org/Kev-9B-GGUF
 # url = "http://host.docker.internal:8010"
 # model = "kev-latest"
