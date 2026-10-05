@@ -25,7 +25,7 @@ french_required = 0.65       # 85% -> 99%: unstated French on teaching ads came 
 computer_engineering = 0.65  # 95% -> 99%
 people_management = 0.7      # 97% -> 98%
 
-# v3 (run 8 vs run 7, 346 ads): same values, still at or near the best for each question
+# v3 (run 10 vs run 7, 349 ads): same values, still at or near the best for each question
 [backends.kev4b.thresholds.v3]
 french_required = 0.65       # 92% -> 98%
 computer_engineering = 0.65  # 95% -> 99%
