@@ -91,3 +91,72 @@ on_site = "Work on site at the employer's premises"
 hybrid = "Hybrid: partly on site, partly remote"
 remote = "Fully remote"
 not_stated = "The ad does not say"
+
+
+# v2: same questions and option keys as v1, with the rules the Claude baseline
+# followed written out, so the model does not have to guess them.
+[question_sets.v2.seniority]
+type = "choice"
+instructions = "What seniority level does this job ad ask for? Judge by the experience and responsibility the ad asks for, not by words in the job title such as 'Senior' or 'Specialist'. If the ad gives no information, answer mid."
+[question_sets.v2.seniority.options]
+junior = "Entry level: graduates, apprentices, career changers welcome, training provided, or at most about 2 years of experience asked"
+mid = "Experienced professional: about 2 to 6 years of experience asked, or 'experience' without more detail, and no lead role"
+senior = "Many years of experience (about 7 or more), recognised expert, or leads a team or group of people"
+director = "Head of a department or service, director, vice president, executive, member of a management committee"
+
+[question_sets.v2.people_management]
+type = "noul"
+instructions = "Will the person hired manage people, i.e. be the line manager of a team of direct reports? Coordinating a project, mentoring colleagues, supervising students or leading a class does not count."
+
+[question_sets.v2.job_family]
+type = "choice"
+instructions = "Which job family does this job belong to?"
+[question_sets.v2.job_family.options]
+software_it = "Software development, IT, IT operations, infrastructure, DevOps, IT security, IT support, IT business analysis and IT project management"
+data_ai = "Data analysis, data engineering, machine learning, AI"
+engineering_technical = "Engineering and technical roles outside IT: mechanical, electrical, process, automation, maintenance"
+science_research = "Research and laboratory science"
+teaching = "Teachers at any level, including school teachers and replacement teachers"
+health_social = "Health care, psychology, social work, social educators and guardianship officers; not school teachers"
+sales = "Sales, business development, account management, insurance and banking advisers who sell to clients"
+customer_service = "Customer service and customer support that is not technical, including handling insurance claims and benefits"
+marketing_design = "Marketing, communication, brand, product and UX design"
+corporate_functions = "Finance, accounting, HR, training, legal, compliance, procurement, administration, assistants"
+production_supply_chain = "Manufacturing, production lines, logistics, warehouse, supply chain, quality control; not IT operations"
+retail = "Shop and store staff"
+other = "None of the above"
+
+[question_sets.v2.computer_engineering]
+type = "noul"
+instructions = "Is this a job for someone with a computer science or computer engineering background, i.e. software, IT or data engineering work? Roles that only use IT tools, such as analytics, statistics, sales of software or business roles, do not count."
+
+[question_sets.v2.employment_type]
+type = "choice"
+instructions = "What type of employment does this job ad offer? If the ad does not say, answer permanent."
+[question_sets.v2.employment_type.options]
+permanent = "Permanent position (open-ended contract), or the ad does not say"
+fixed_term = "Contract limited to a period or an end date (CDD, befristet), that is not a replacement"
+internship = "Internship or traineeship"
+apprenticeship = "Apprenticeship or vocational training position"
+temporary = "Replacement of an absent employee (maternity leave, sick leave, leave cover), or an interim assignment"
+
+[question_sets.v2.french_required]
+type = "noul"
+instructions = "Does the ad ask for French? Answer yes if the ad asks for French at any level, for example 'fluent in French', 'bonne maîtrise du français', 'langue maternelle française', 'gute Französischkenntnisse'. Answer no if French is only an advantage, an asset or a plus; if French or another language is enough ('French or German'); or if French is not mentioned. An ad written in French does not by itself require French."
+
+[question_sets.v2.german_required]
+type = "noul"
+instructions = "Does the ad ask for German? Answer yes if the ad asks for German at any level, for example 'fluent in German', 'sehr gute Deutschkenntnisse', 'stilsicheres Deutsch', 'Deutsch als Muttersprache', 'maîtrise de l'allemand'. Answer no if German is only an advantage, an asset or a plus ('von Vorteil', 'un atout'); if German or another language is enough ('German or French'); or if German is not mentioned. An ad written in German does not by itself require German."
+
+[question_sets.v2.english_required]
+type = "noul"
+instructions = "Does the ad ask for English? Answer yes if the ad asks for English at any level, for example 'fluent in English', 'bonnes connaissances de l'anglais', 'anglais B2', 'gute Englischkenntnisse'. Answer no if English is only an advantage, an asset or a plus; if English or another language is enough ('English or French'); or if English is not mentioned."
+
+[question_sets.v2.work_model]
+type = "choice"
+instructions = "What work model does the ad describe? Only use on_site without an explicit statement when the job can only be done at one place."
+[question_sets.v2.work_model.options]
+on_site = "The ad says the work is on site or office-based, or the job can only be done at one place: school, factory, shop, branch counter, production line, construction site"
+hybrid = "The ad says the work is partly on site and partly remote or home office"
+remote = "The ad says the work is fully remote"
+not_stated = "The ad does not say, including office jobs and field jobs (sales visits, advisers on the road) where nothing is stated"
