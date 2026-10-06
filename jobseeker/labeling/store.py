@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS label_runs (
     labeled       INTEGER NOT NULL DEFAULT 0,
     failed        INTEGER NOT NULL DEFAULT 0,
     error         TEXT,
-    note          TEXT
+    note          TEXT,
+    test          INTEGER NOT NULL DEFAULT 0  -- 1: a trial (speed, settings); never shown as current labels
 );
 
 CREATE TABLE IF NOT EXISTS job_labels (
@@ -58,6 +59,10 @@ class LabelStore:
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
         self.conn.executescript(SCHEMA)
+        columns = {r[1] for r in self.conn.execute("PRAGMA table_info(label_runs)")}
+        if "test" not in columns:   # databases from before test runs
+            with self.conn:
+                self.conn.execute("ALTER TABLE label_runs ADD COLUMN test INTEGER NOT NULL DEFAULT 0")
 
     def register_question_set(self, qs: QuestionSet):
         """Store the set on first use; refuse a set edited under a name already used."""
@@ -73,14 +78,14 @@ class LabelStore:
                 f"old and new wording can't be compared: give the changed set a new name (e.g. v2).")
 
     def start_run(self, backend: str, endpoint: str | None, model: str | None, model_info,
-                  question_set: str, input_recipe: str, note: str | None = None) -> int:
+                  question_set: str, input_recipe: str, note: str | None = None, test: bool = False) -> int:
         with self.conn:
             return self.conn.execute(
                 """INSERT INTO label_runs (backend, endpoint, model, model_info, question_set,
-                       input_recipe, started_at, status, note)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, 'running', ?)""",
+                       input_recipe, started_at, status, note, test)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 'running', ?, ?)""",
                 (backend, endpoint, model, json.dumps(model_info, ensure_ascii=False),
-                 question_set, input_recipe, now(), note)).lastrowid
+                 question_set, input_recipe, now(), note, int(test))).lastrowid
 
     def add_answers(self, run_id: int, company: str, job_id: str, answers: dict[str, Answer],
                     raw: dict | None = None):

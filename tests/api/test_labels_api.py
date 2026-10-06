@@ -160,3 +160,21 @@ def test_without_labels_configured(config):  # noqa: F811
     assert c.post("/api/label").status_code == 404
     assert c.get("/api/jobs", params={"label": "seniority:junior"}).status_code == 400
     assert c.get("/api/status").json()["unlabelled"] is None
+
+
+def test_test_runs_are_not_current_labels(labelled):
+    qs = load_question_set(labelled.labels, "t1")
+    store = JobStore(str(labelled.db_path))
+    labels = LabelStore(store.conn)
+    run = labels.start_run("kev", "http://kev.test", "jaredpalmer/kev-4b", {}, "t1", "full", "speed test", test=True)
+    answer = raw("junior", 0.99)
+    labels.add_answers(run, "acme", "1", {k: parse_answer(q, answer[k]) for k, q in qs.questions.items()}, answer)
+    labels.add_answers(run, "beta", "/job/Zurich/Dev_JR1", {k: parse_answer(q, answer[k]) for k, q in qs.questions.items()}, answer)
+    labels.finish_run(run, 2, 0)
+    assert labels.run(run)["test"] == 1
+    store.close()
+    c, _ = client(labelled)
+    jobs = by_id(c.get("/api/jobs"))
+    assert jobs["1"]["labels"]["seniority"]["answer"] == "experienced"   # the newer test run does not win
+    assert jobs["/job/Zurich/Dev_JR1"]["labels"] is None                 # nor count as labelled
+    assert c.get("/api/status").json()["unlabelled"] == 2

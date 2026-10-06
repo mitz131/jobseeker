@@ -161,7 +161,7 @@ def labels_run(args, config, store, labels):
         sys.exit("No jobs selected")
     print(f"Labelling {len(jobs)} job(s) with {args.backend} ({client_.url}), questions {qs.name}, input {args.input}")
     progress = lambda i, n: print(f"  {i}/{n}", flush=True) if i % 25 == 0 or i == n else None
-    result = label_jobs(labels, client_, qs, args.input, jobs, args.backend, args.note, progress)
+    result = label_jobs(labels, client_, qs, args.input, jobs, args.backend, args.note, progress, test=args.test)
     print(f"Run {result.run_id}: {result.labeled} labelled, {result.failed} failed"
           + (f" ({result.error})" if result.error else ""))
     return 1 if result.error or not result.labeled else 0
@@ -172,7 +172,8 @@ def labels_import(args, config, store, labels):
     with open(args.file, encoding="utf-8") as f:
         items = json.load(f)
     items = items.get("labels", items) if isinstance(items, dict) else items
-    result = import_labels(labels, store.conn, qs, items, args.backend, args.model, args.input, args.note)
+    result = import_labels(labels, store.conn, qs, items, args.backend, args.model, args.input, args.note,
+                           test=args.test)
     print(f"Run {result.run_id}: {result.labeled} imported, {result.failed} rejected")
     return 0 if result.labeled else 1
 
@@ -182,7 +183,7 @@ def labels_runs(labels):
     for r in runs:
         print(f"{r['id']:>4}  {r['started_at'][:16]}  {r['backend']:<10} {(r['model'] or ''):<28} "
               f"{r['question_set']:<5} {r['input_recipe']:<9} {r['status']:<8} "
-              f"{r['labeled']:>4} ok {r['failed']:>3} failed  {r['note'] or ''}".rstrip())
+              f"{r['labeled']:>4} ok {r['failed']:>3} failed  {'[test] ' if r['test'] else ''}{r['note'] or ''}".rstrip())
     print(f"\n{len(runs)} run(s)")
     return 0
 
@@ -288,6 +289,7 @@ def main(argv=None) -> int:
     lr.add_argument("--jobs", help="file with one 'company job_id' per line")
     lr.add_argument("--limit", type=int, help="at most this many jobs")
     lr.add_argument("--note")
+    lr.add_argument("--test", action="store_true", help="a trial run: never shown as the current labels")
     li = lsub.add_parser("import", help="import answers without probabilities (Claude, human)")
     li.add_argument("file", help='JSON: [{"company", "job_id", "answers": {question: answer}}]')
     li.add_argument("--backend", default="claude")
@@ -295,6 +297,7 @@ def main(argv=None) -> int:
     li.add_argument("--questions", default="v1")
     li.add_argument("--input", default="full", help="what the labeller read (default: full)")
     li.add_argument("--note")
+    li.add_argument("--test", action="store_true", help="a trial: never shown as the current labels")
     lsub.add_parser("runs", help="list label runs")
     lc = lsub.add_parser("compare", help="agreement between two runs, per question")
     lc.add_argument("run_a", type=int)

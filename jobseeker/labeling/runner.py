@@ -94,13 +94,13 @@ class RunResult:
 
 def label_jobs(labels: LabelStore, client: SystemOneClient, qs: QuestionSet, recipe: str,
                jobs: list[sqlite3.Row], backend: str, note: str | None = None,
-               progress: Callable[[int, int], None] | None = None) -> RunResult:
+               progress: Callable[[int, int], None] | None = None, test: bool = False) -> RunResult:
     if recipe not in INPUT_RECIPES:
         raise ValueError(f"Unknown input recipe {recipe!r}; known: {', '.join(INPUT_RECIPES)}")
     labels.register_question_set(qs)
     info = client.model_info()
     run_id = labels.start_run(backend, client.url, model_id(info, client.model), info,
-                              qs.name, recipe, note)
+                              qs.name, recipe, note, test)
     questions, build_state = qs.systemone_questions(), INPUT_RECIPES[recipe]
     labeled = failed = 0
     error = None
@@ -124,14 +124,14 @@ def label_jobs(labels: LabelStore, client: SystemOneClient, qs: QuestionSet, rec
 
 
 def import_labels(labels: LabelStore, conn: sqlite3.Connection, qs: QuestionSet, items: list[dict],
-                  backend: str, model: str, recipe: str, note: str | None = None) -> RunResult:
+                  backend: str, model: str, recipe: str, note: str | None = None, test: bool = False) -> RunResult:
     """Answers without probabilities, e.g. from Claude or a person:
     [{"company": ..., "job_id": ..., "answers": {"seniority": "senior", "computer_engineering": "yes", ...}}]
     Questions missing from an item are left unanswered for that job."""
     labels.register_question_set(qs)
     known = {(r["company"], r["job_id"]) for r in conn.execute("SELECT company, job_id FROM jobs")}
     run_id = labels.start_run(backend, None, model, {"source": "import", "model": model},
-                              qs.name, recipe, note)
+                              qs.name, recipe, note, test)
     labeled = failed = 0
     for item in items:
         key = (item["company"], item["job_id"])

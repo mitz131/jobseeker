@@ -2,7 +2,8 @@
 
 labels.toml [current] names one backend and question set. A job's current labels
 are the answers of the newest run of that pair that labelled it, read with the
-backend's thresholds; so a full run and the small runs after each crawl add up."""
+backend's thresholds; so a full run and the small runs after each crawl add up.
+Test runs (`labels run --test`) never count."""
 
 import logging
 import sqlite3
@@ -40,9 +41,9 @@ def load_current(labels_config: dict) -> Current | None:
 
 
 def current_runs(conn: sqlite3.Connection, current: Current) -> list[int]:
-    """Runs of the current backend and question set, oldest first."""
+    """Runs of the current backend and question set, oldest first, without test runs."""
     return [r[0] for r in conn.execute(
-        "SELECT id FROM label_runs WHERE backend = ? AND question_set = ? ORDER BY id",
+        "SELECT id FROM label_runs WHERE backend = ? AND question_set = ? AND NOT test ORDER BY id",
         (current.backend, current.questions.name))]
 
 
