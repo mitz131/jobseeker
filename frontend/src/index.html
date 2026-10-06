@@ -38,6 +38,15 @@
     <fieldset id="companies" class="companies">
       <legend>Employers</legend>
     </fieldset>
+    <div id="quick" class="quick" hidden>
+      <span class="legend">Quick filters</span>
+      <button id="clear-labels" type="button" class="link" hidden>clear label filters</button>
+    </div>
+    <details id="label-filters" class="label-filters" hidden>
+      <summary>Label filters <span id="label-count" class="muted"></span></summary>
+      <div id="label-groups" class="label-groups"></div>
+      <p class="muted hint">Jobs that are not labelled yet always show.</p>
+    </details>
     <p id="filter-error" class="error" role="alert" hidden></p>
   </form>
 

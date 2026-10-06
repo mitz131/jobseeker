@@ -2,6 +2,7 @@
 Also: importing answers given without a backend (Claude or human labels)."""
 
 import logging
+import os
 import sqlite3
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -50,6 +51,18 @@ class SystemOneClient:
         if not resp.ok:
             raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:300]}")
         return resp.json()["answers"]
+
+
+def client_for(labels_config: dict, backend: str) -> SystemOneClient:
+    """The client for a backend of labels.toml [backends.<name>]; ValueError if it is unknown or its key is missing."""
+    backends = labels_config.get("backends", {})
+    if backend not in backends:
+        raise ValueError(f"Unknown backend {backend!r}; defined in labels.toml: {', '.join(backends) or 'none'}")
+    spec = backends[backend]
+    api_key = os.environ.get(spec["api_key_env"]) if spec.get("api_key_env") else None
+    if spec.get("api_key_env") and not api_key:
+        raise ValueError(f"Backend {backend!r} needs an API key in the environment variable {spec['api_key_env']}")
+    return SystemOneClient(spec["url"], spec.get("model", "kev-latest"), api_key)
 
 
 def model_id(info: dict | None, fallback: str) -> str:

@@ -1,4 +1,5 @@
-"""FastAPI app: browse stored jobs, filter by distance, refresh in the background.
+"""FastAPI app: browse stored jobs, filter by distance and by labels, refresh in the
+background (crawl, then label the new jobs).
 
 Interactive documentation is served at /docs (Swagger UI) and /redoc; the web
 page (frontend/src) at /.
@@ -17,11 +18,17 @@ from ..config import Config
 from ..crawler.http import HttpClient
 from ..crawler.runner import run_all
 from ..db import JobStore
+from ..labeling.current import current_labels, label_new_jobs, load_current
 from ..places import distance_to_job, norm
 from .refresh import Refresher
 
 # The repository's frontend/src (jobseeker/api/app.py -> repository root)
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "src"
+
+
+class Label(BaseModel):
+    answer: str
+    probability: float | None  # of `answer`; None for labels without probabilities
 
 
 class JobSummary(BaseModel):
@@ -36,6 +43,7 @@ class JobSummary(BaseModel):
     open: bool  # seen in the company's latest successful run
     distance_km: float | None = None  # only when `home` is given and the location is known
     nearest: str | None = None  # the location the distance was measured to
+    labels: dict[str, Label] | None = None  # question -> answer; None: not labelled yet
 
 
 class JobList(BaseModel):
@@ -64,7 +72,31 @@ class Status(BaseModel):
     refresh_started_at: str | None
     refresh_finished_at: str | None
     refresh_error: str | None
+    refresh_phase: str | None = None  # "crawling" or "labelling" while running
+    refresh_done: int | None = None   # labelling progress
+    refresh_total: int | None = None
+    refresh_note: str | None = None   # e.g. why labelling was skipped
+    unlabelled: int | None = None     # stored jobs without current labels; None: labels not configured
     companies: list[CompanyStatus]
+
+
+class LabelOption(BaseModel):
+    key: str
+    description: str
+
+
+class LabelQuestion(BaseModel):
+    key: str
+    type: Literal["choice", "noul"]
+    instructions: str
+    options: list[LabelOption]  # yes/no questions: yes and no
+
+
+class LabelInfo(BaseModel):
+    backend: str
+    question_set: str
+    thresholds: dict[str, float]
+    questions: list[LabelQuestion]
 
 
 class RefreshResult(BaseModel):
@@ -74,9 +106,10 @@ class RefreshResult(BaseModel):
 
 def create_app(config: Config, batch: Callable[[], object] | None = None,
                max_age: timedelta = timedelta(hours=24),
-               frontend_dir: Path | None = FRONTEND_DIR) -> FastAPI:
-    """`batch` defaults to crawling every enabled company; tests pass a fake.
-    `frontend_dir` is served at / (None: API only)."""
+               frontend_dir: Path | None = FRONTEND_DIR, label_client=None) -> FastAPI:
+    """`batch` defaults to crawling every enabled company, then labelling the new jobs;
+    tests pass a fake. `frontend_dir` is served at / (None: API only). `label_client`
+    replaces the labels.toml backend (tests)."""
 
     def store() -> Iterator[JobStore]:
         # One connection per request: FastAPI serves requests from a thread pool
@@ -86,13 +119,30 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         finally:
             s.close()
 
+    current = load_current(config.labels)
+
+    def label_new():
+        refresher.report("labelling")
+        s = JobStore(str(config.db_path))
+        try:
+            outcome = label_new_jobs(s.conn, config.labels, lambda i, n: refresher.report("labelling", i, n),
+                                     client=label_client)
+        finally:
+            s.close()
+        if outcome.skipped:
+            refresher.note = f"Labelling skipped: {outcome.skipped}"
+        elif outcome.failed:
+            refresher.note = f"Labelled {outcome.labelled} job(s), {outcome.failed} failed"
+
     def crawl():
+        refresher.report("crawling")
         s = JobStore(str(config.db_path))
         try:
             run_all(s, HttpClient(delay=config.request_delay), config.companies(),
                     config.max_new_per_company)
         finally:
             s.close()
+        label_new()
 
     def last_update() -> str | None:
         s = JobStore(str(config.db_path))
@@ -113,6 +163,21 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         return {k: row[k] for k in JobSummary.model_fields if k in row.keys()} | {
             "open": started is None or row["last_seen"] >= started}
 
+    def label_filter(values: list[str]) -> dict[str, set[str]]:
+        """["question:answer", ...] -> {question: {answers}}; 400 for unknown ones."""
+        if values and current is None:
+            raise HTTPException(400, "Labels are not configured (labels.toml [current])")
+        wanted: dict[str, set[str]] = {}
+        for v in values:
+            q, _, a = v.partition(":")
+            question = current.questions.questions.get(q)
+            if question is None:
+                raise HTTPException(400, f"Unknown label question {q!r}")
+            if a not in question.answers():
+                raise HTTPException(400, f"{q}: {a!r} is not one of {', '.join(question.answers())}")
+            wanted.setdefault(q, set()).add(a)
+        return wanted
+
     @app.get("/api/jobs", response_model=JobList, summary="List stored jobs")
     def list_jobs(
         db: Store,
@@ -122,6 +187,10 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         location: Annotated[str | None, Query(description="Text in the location, ignoring case and accents")] = None,
         include_closed: Annotated[bool, Query(description="Also jobs no longer listed by the employer")] = False,
         sort: Annotated[Literal["date", "distance"], Query(description="date: newest first; distance: nearest first")] = "date",
+        label: Annotated[list[str] | None, Query(
+            description='Label filters "question:answer", e.g. "job_family:software_it" (repeatable). '
+                        "Answers of one question are alternatives, several questions must all match. "
+                        "Jobs not labelled yet are always included. See /api/labels.")] = None,
         limit: Annotated[int, Query(ge=1, le=1000)] = 200,
         offset: Annotated[int, Query(ge=0)] = 0,
     ) -> JobList:
@@ -136,6 +205,8 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             except ValueError as e:
                 raise HTTPException(400, str(e))
 
+        wanted_labels = label_filter(label or [])
+        labels = current_labels(db.conn, current) if current else {}
         open_since = db.last_good_run_starts()
         wanted_location = norm(location) if location else None
         items = []
@@ -147,6 +218,11 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
                 continue
             if wanted_location and wanted_location not in norm(row["location"] or ""):
                 continue
+            job_labels = labels.get((row["company"], row["job_id"]))
+            if job_labels is not None:
+                if any(job_labels.get(q, {}).get("answer") not in answers for q, answers in wanted_labels.items()):
+                    continue
+                item["labels"] = job_labels
             if home_place:
                 match = distance_to_job(config.places, home_place, row["location"])
                 if match:
@@ -167,7 +243,8 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         row = db.get_job(company, job_id)
         if row is None:
             raise HTTPException(404, "Job not found")
-        return Job(**summary(row, db.last_good_run_starts()), description=row["description"])
+        labels = current_labels(db.conn, current).get((company, job_id)) if current else None
+        return Job(**summary(row, db.last_good_run_starts()), labels=labels, description=row["description"])
 
     @app.get("/api/status", response_model=Status, summary="Data age and refresh state")
     def status(db: Store) -> Status:
@@ -179,6 +256,12 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             refresh_started_at=refresher.started_at,
             refresh_finished_at=refresher.finished_at,
             refresh_error=refresher.error,
+            refresh_phase=refresher.phase,
+            refresh_done=refresher.done,
+            refresh_total=refresher.total,
+            refresh_note=refresher.note,
+            unlabelled=(db.conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+                        - len(current_labels(db.conn, current))) if current else None,
             companies=[CompanyStatus(company=r["company"], last_run_finished=r["finished_at"],
                                      listed=r["listed"], new=r["new"], error=r["error"])
                        for r in db.latest_runs()],
@@ -189,6 +272,28 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         """Starts a run if the data is older than the threshold (24 h), unless one is
         already running. Returns immediately; poll /api/status for progress."""
         started, reason = refresher.start(force=force)
+        return RefreshResult(started=started, reason=reason)
+
+    @app.get("/api/labels", response_model=LabelInfo, summary="The label questions and their answers")
+    def label_info() -> LabelInfo:
+        """What /api/jobs `labels` and the `label` filter use: labels.toml [current]."""
+        if current is None:
+            raise HTTPException(404, "Labels are not configured (labels.toml [current])")
+        questions = []
+        for key, q in current.questions.questions.items():
+            options = q.options if q.type == "choice" else {"yes": "yes", "no": "no"}
+            questions.append(LabelQuestion(key=key, type=q.type, instructions=q.instructions,
+                                           options=[LabelOption(key=k, description=d) for k, d in options.items()]))
+        return LabelInfo(backend=current.backend, question_set=current.questions.name,
+                         thresholds=current.thresholds, questions=questions)
+
+    @app.post("/api/label", response_model=RefreshResult, summary="Label the jobs that have no labels yet")
+    def label_now() -> RefreshResult:
+        """Starts labelling in the background (also part of every refresh), unless a
+        background job is running. Returns immediately; poll /api/status for progress."""
+        if current is None:
+            raise HTTPException(404, "Labels are not configured (labels.toml [current])")
+        started, reason = refresher.start(batch=label_new)
         return RefreshResult(started=started, reason=reason)
 
     # Mounted last, so the API routes and /docs take precedence over files

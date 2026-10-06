@@ -10,6 +10,13 @@
 #            Option order matters and is kept as written here.
 #   noul   : yes/no; stored as "yes"/"no" with the probability of that answer.
 
+# The labels the web page and API show: per job, the newest answers of this backend
+# and question set (with the backend's thresholds). A refresh labels new jobs with it.
+[current]
+backend = "kev4b"
+questions = "v4"
+input = "full"
+
 [backends.kev4b]
 # Jared Palmer's KEV server on the Windows host (python -m kev.serve --port 8009)
 url = "http://host.docker.internal:8009"

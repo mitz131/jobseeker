@@ -165,7 +165,7 @@ def test_one_refresh_at_a_time(config):
     client, refresher = client_for(config, max_age=STALE, batch=slow_batch)
     assert client.post("/api/refresh").json()["started"] is True
     assert client.get("/api/status").json()["refresh_running"] is True
-    assert client.post("/api/refresh").json() == {"started": False, "reason": "a refresh is already running"}
+    assert client.post("/api/refresh").json() == {"started": False, "reason": "a background job is already running"}
     release.set()
     assert refresher.wait(timeout=5)
     status = client.get("/api/status").json()

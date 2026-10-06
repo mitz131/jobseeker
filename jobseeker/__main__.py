@@ -3,7 +3,6 @@
 import argparse
 import json
 import logging
-import os
 import sys
 from collections import Counter
 
@@ -15,7 +14,7 @@ from .crawler.sources.workday import iter_facets
 from .db import JobStore, now
 from .labeling.compare import compare_runs
 from .labeling.questions import load_question_set, load_thresholds
-from .labeling.runner import INPUT_RECIPES, SystemOneClient, import_labels, label_jobs, select_jobs
+from .labeling.runner import INPUT_RECIPES, client_for, import_labels, label_jobs, select_jobs
 from .labeling.store import LabelStore
 from .places import distance_to_job, location_strings
 
@@ -151,20 +150,16 @@ def cmd_labels(args, config, store, client):
 
 
 def labels_run(args, config, store, labels):
-    backends = config.labels.get("backends", {})
-    if args.backend not in backends:
-        sys.exit(f"Unknown backend {args.backend!r}; defined in labels.toml: {', '.join(backends) or 'none'}")
-    spec = backends[args.backend]
-    api_key = os.environ.get(spec["api_key_env"]) if spec.get("api_key_env") else None
-    if spec.get("api_key_env") and not api_key:
-        sys.exit(f"Backend {args.backend!r} needs an API key in the environment variable {spec['api_key_env']}")
+    try:
+        client_ = client_for(config.labels, args.backend)
+    except ValueError as e:
+        sys.exit(str(e))
     qs = load_question_set(config.labels, args.questions)
     keys = read_job_keys(args.jobs) if args.jobs else None
     jobs = select_jobs(store.conn, args.company, keys, args.limit)
     if not jobs:
         sys.exit("No jobs selected")
-    client_ = SystemOneClient(spec["url"], spec.get("model", "kev-latest"), api_key)
-    print(f"Labelling {len(jobs)} job(s) with {args.backend} ({spec['url']}), questions {qs.name}, input {args.input}")
+    print(f"Labelling {len(jobs)} job(s) with {args.backend} ({client_.url}), questions {qs.name}, input {args.input}")
     progress = lambda i, n: print(f"  {i}/{n}", flush=True) if i % 25 == 0 or i == n else None
     result = label_jobs(labels, client_, qs, args.input, jobs, args.backend, args.note, progress)
     print(f"Run {result.run_id}: {result.labeled} labelled, {result.failed} failed"
