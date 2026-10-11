@@ -3,6 +3,10 @@
   POST {base}/widgets  {"ddoKey": "refineSearch", ...}  -> search (JSON)
   GET  {base}/{locale_path}/job/{jobId}                 -> detail page; the job
        JSON is embedded in the page as `phApp.ddo = {...};`
+
+The stored link is the page's canonical URL: sites differ in their public job paths
+(PMI: job/30974/<slug>, Cisco: job/CISCISGLOBAL2021353EXTERNALENGLOBAL/<slug>); in a
+browser, Cisco's plain job/{jobId} link ends in a CloudFront 403.
 """
 
 import json
@@ -13,6 +17,7 @@ from ..html_text import html_to_text
 from .base import JobDetail, JobRef
 
 DDO_RE = re.compile(r"phApp\.ddo\s*=\s*(\{.*?\});\s*phApp\.", re.S)
+CANONICAL_RE = re.compile(r'<link rel="canonical" href="([^"]+)"')
 # Search-index / ML fields that bloat the stored payload without adding information
 NOISE_PREFIXES = ("completeDescription_chunk_", "emb_", "ml_")
 
@@ -80,7 +85,9 @@ class PhenomSource:
                 break
 
     def fetch_detail(self, ref: JobRef) -> JobDetail:
-        ddo = parse_ddo(self.client.get_text(ref.url))
+        page = self.client.get_text(ref.url)
+        ddo = parse_ddo(page)
+        canonical = CANONICAL_RE.search(page)
         job = ddo.get("jobDetail", {}).get("data", {}).get("job", {})
         if not job:
             raise ValueError(f"No job data on {ref.url}")
@@ -91,5 +98,6 @@ class PhenomSource:
             raw={k: v for k, v in job.items() if not k.startswith(NOISE_PREFIXES)},
             title=job.get("title"),
             location=" / ".join(job_locations(job)),
+            url=canonical.group(1) if canonical else None,
             posted_on=(job.get("postedDate") or "")[:10] or None,
         )

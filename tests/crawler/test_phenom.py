@@ -18,7 +18,8 @@ class FakePhenomClient:
     def get_text(self, url):
         job = {"title": "Job", "description": "<p>Hello</p>", "completeDescription_chunk_0": {"chunk": "x"},
                "multi_location": [{"location": "Bern, Switzerland"}]}
-        return f"<script>phApp.ddo = {json.dumps({'jobDetail': {'data': {'job': job}}})}; phApp.x = 1;</script>"
+        canonical = '<link rel="canonical" href="https://jobs.example.com/gb/en/job/SEQ0/Job">' if url.endswith("/0") else ""
+        return f"{canonical}<script>phApp.ddo = {json.dumps({'jobDetail': {'data': {'job': job}}})}; phApp.x = 1;</script>"
 
 
 class PhenomTests(unittest.TestCase):
@@ -34,3 +35,9 @@ class PhenomTests(unittest.TestCase):
         self.assertEqual(d.description, "Hello")
         self.assertEqual(d.location, "Bern, Switzerland")
         self.assertNotIn("completeDescription_chunk_0", d.raw)
+
+    def test_detail_link_is_the_canonical_url(self):
+        src = PhenomSource(FakePhenomClient(), "https://jobs.example.com")
+        first, second = list(src.list_jobs())[:2]
+        self.assertEqual(src.fetch_detail(first).url, "https://jobs.example.com/gb/en/job/SEQ0/Job")
+        self.assertIsNone(src.fetch_detail(second).url)   # no canonical link: the listing URL is kept
