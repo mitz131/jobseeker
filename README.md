@@ -188,6 +188,30 @@ workers.
 `run` exits non-zero if any company failed; each run is also logged in the
 `runs` table.
 
+## Kubernetes (minikube in the sandbox)
+
+The image (`Dockerfile`) runs `jobseeker serve`; the data (`jobs.db` and the swisstopo
+register) lives on a volume at `/app/data`. One pod only: SQLite and the background
+refresh allow no second copy. Manifests: `deploy/k8s/jobseeker.yaml`.
+
+```bash
+deploy/minikube-network.sh   # after every `minikube start`: lets pods out (see below)
+deploy/minikube-deploy.sh    # build, load into minikube, apply; first time: seed from data/
+deploy/minikube-deploy.sh --seed   # replace the pod's database with a copy of data/jobs.db
+kubectl -n jobseeker port-forward --address 0.0.0.0 svc/jobseeker 8091:8090
+```
+
+and on the host `sbx ports <sandbox> --publish 8091:8091`, then http://localhost:8091.
+
+Networking in the sandbox needs two fixes, both lost when minikube restarts:
+the node's `FORWARD` chain defaults to `DROP` (left by Docker in minikube's node
+image), which blocks every connection out of a pod, DNS included; and pods can't
+reach the sandbox proxy. `minikube-network.sh` sets the policy to `ACCEPT` and
+relays the proxy on `192.168.49.1:3128` (socat), which the pod uses as
+`HTTPS_PROXY`/`HTTP_PROXY`, for the career sites and for KEV.
+
+The pod's database is its own copy: crawls and labels there don't reach `data/jobs.db`.
+
 ## Storage
 
 `data/jobs.db` (SQLite):
