@@ -92,3 +92,16 @@ company = "salt-mobile-sa"
 lang = "fr"                      # Swiss-only employer: no country filter needed
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "cisco"
+type = "phenom"
+base_url = "https://careers.cisco.com"
+locale_path = "global/en"        # Cisco's site is global/en, not PMI's gb/en
+lang = "en_global"
+site_country = "global"
+page_id = "page4"                # the search-results page
+selected_fields = { country = ["Switzerland"] }   # also keeps Europe-wide roles that list a Swiss city
+page_size = 50
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

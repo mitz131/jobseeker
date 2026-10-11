@@ -64,6 +64,7 @@ frontend/
 | État de Vaud | Oracle Recruiting Cloud           | JSON API            |
 | BCV          | SAP SuccessFactors (newer site)   | JSON API + HTML     |
 | Salt         | JobCloud company list             | embedded JSON + HTML|
+| Cisco        | Phenom (careers.cisco.com)        | JSON API            |
 
 Adding a company on a supported platform is just a config entry. Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`

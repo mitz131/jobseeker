@@ -1,4 +1,4 @@
-"""Phenom People career sites (Philip Morris: join.pmicareers.com).
+"""Phenom People career sites (Philip Morris: join.pmicareers.com, Cisco: careers.cisco.com).
 
   POST {base}/widgets  {"ddoKey": "refineSearch", ...}  -> search (JSON)
   GET  {base}/{locale_path}/job/{jobId}                 -> detail page; the job
