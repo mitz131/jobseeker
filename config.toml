@@ -105,3 +105,13 @@ selected_fields = { country = ["Switzerland"] }   # also keeps Europe-wide roles
 page_size = 50
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "swisscom"
+type = "workday"
+base_url = "https://swisscom.wd103.myworkdayjobs.com"
+tenant = "swisscom"
+site = "SwisscomExternalCareers"
+search = ""                      # Swiss-only employer: no country filter needed
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

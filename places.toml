@@ -21,6 +21,8 @@ ignore = [
 "Romont" = "Romont FR"            # Nestlé's site; Romont BE is a different town
 "Bienne" = "Biel/Bienne"
 "Biel" = "Biel/Bienne"            # otherwise "Biel" matches the hamlet Biel VS (Goms)
+"Geneva (Genève)" = "Genève"     # Swisscom's Workday spelling
+"Wor-Ati6" = "Worblaufen"         # Swisscom building code: head office, Alte Tiefenaustrasse 6
 # A lone "Zurich", "Bern", "Luzern"... is read as the town. Strings listing
 # several canton names ("Berne, Argovie, Soleure") are read as those cantons.
 
