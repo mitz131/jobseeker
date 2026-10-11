@@ -23,7 +23,7 @@ src = sqlite3.connect('/app/data/jobs.db', timeout=30)
 dst = sqlite3.connect('/tmp/jobs-snapshot.db')
 src.backup(dst)
 dst.close()"
-kubectl -n "$ns" cp "$pod:/tmp/jobs-snapshot.db" "$backup" 2> >(grep -v "Removing leading" >&2)
+kubectl -n "$ns" cp "$pod:/tmp/jobs-snapshot.db" "$backup" 2>&1 | { grep -v "Removing leading" || true; }
 kubectl -n "$ns" exec "$pod" -- rm -f /tmp/jobs-snapshot.db
 
 "$python" - "$backup" <<'EOF'
