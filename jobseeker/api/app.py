@@ -5,6 +5,8 @@ Interactive documentation is served at /docs (Swagger UI) and /redoc; the web
 page (frontend/src) at /.
 """
 
+import os
+import socket
 from collections.abc import Callable, Iterator
 from datetime import timedelta
 from pathlib import Path
@@ -64,6 +66,30 @@ class CompanyStatus(BaseModel):
     error: str | None
 
 
+class Runtime(BaseModel):
+    where: Literal["kubernetes", "container", "local"]
+    detail: str  # e.g. "pod jobseeker-6776b5f49-5z9l8 in namespace jobseeker", or the host name
+
+
+SERVICE_ACCOUNT_NAMESPACE = Path("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+
+
+def detect_runtime(env=os.environ) -> Runtime:
+    """Where this server runs: Kubernetes sets KUBERNETES_SERVICE_HOST in every pod,
+    Docker and Podman leave /.dockerenv or /run/.containerenv."""
+    host = socket.gethostname()
+    if env.get("KUBERNETES_SERVICE_HOST"):
+        try:
+            namespace = SERVICE_ACCOUNT_NAMESPACE.read_text().strip()
+        except OSError:
+            namespace = None
+        return Runtime(where="kubernetes",
+                       detail=f"pod {host}" + (f" in namespace {namespace}" if namespace else ""))
+    if Path("/.dockerenv").exists() or Path("/run/.containerenv").exists():
+        return Runtime(where="container", detail=f"container {host}")
+    return Runtime(where="local", detail=host)
+
+
 class Status(BaseModel):
     last_update: str | None  # latest successful company run
     stale: bool  # older than the refresh threshold
@@ -77,6 +103,7 @@ class Status(BaseModel):
     refresh_total: int | None = None
     refresh_note: str | None = None   # e.g. why labelling was skipped
     unlabelled: int | None = None     # stored jobs without current labels; None: labels not configured
+    running: Runtime                  # where this server runs
     companies: list[CompanyStatus]
 
 
@@ -151,6 +178,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         finally:
             s.close()
 
+    runtime = detect_runtime()
     refresher = Refresher(batch or crawl, last_update, max_age)
     app = FastAPI(title="jobseeker", version="0.1.0",
                   description="Swiss job openings from employer career sites, "
@@ -262,6 +290,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             refresh_note=refresher.note,
             unlabelled=(db.conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
                         - len(current_labels(db.conn, current))) if current else None,
+            running=runtime,
             companies=[CompanyStatus(company=r["company"], last_run_finished=r["finished_at"],
                                      listed=r["listed"], new=r["new"], error=r["error"])
                        for r in db.latest_runs()],

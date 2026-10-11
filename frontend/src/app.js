@@ -3,7 +3,7 @@
 
 import {
   availableQuickFilters, debounce, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags, optionName,
-  questionName, quickFilterActive, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
+  questionName, quickFilterActive, runtimeText, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
 } from "./lib.js";
 
 const POLL_MS = 5000;
@@ -224,6 +224,12 @@ function renderStatus(s) {
   $("status-text").textContent = s.last_update
     ? `Updated ${formatAge(s.last_update)}` : "Not updated yet";
   $("status-text").title = s.last_update ? new Date(s.last_update).toLocaleString() : "";
+  if (s.running) {
+    $("runtime").textContent = runtimeText(s.running.where);
+    $("runtime").title = s.running.detail;
+    $("runtime").className = `runtime ${s.running.where}`;
+    $("runtime").hidden = false;
+  }
   $("refresh").disabled = s.refresh_running;
 
   const banner = $("banner");

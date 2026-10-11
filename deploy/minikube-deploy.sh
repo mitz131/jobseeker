@@ -21,7 +21,7 @@ volume_has_db() {
 }
 
 seed() {
-  echo "Seeding the volume from data/"
+  echo "Checking the data volume"
   kubectl -n "$ns" scale deployment/jobseeker --replicas=0
   kubectl -n "$ns" wait --for=delete pod -l app=jobseeker --timeout=120s || true
   # a throwaway pod with the volume; our own image, since the node can't pull others

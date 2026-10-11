@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags,
-  quickFilterActive, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
+  quickFilterActive, runtimeText, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
 } from "../src/lib.js";
 
 test("state survives a round trip through the URL", () => {
@@ -105,4 +105,10 @@ test("row tags skip common defaults and mark unsure answers", () => {
   assert.equal(tags[1].title, "Job family: software / IT (45%)");
   assert.deepEqual(labelTags(null).map((t) => t.text), ["not labelled yet"]);
   assert.equal(labelTags({ seniority: l("junior", null) })[0].title, "Seniority: junior");  // imported labels
+});
+
+test("runtime text for the status line", () => {
+  assert.equal(runtimeText("kubernetes"), "on Kubernetes");
+  assert.equal(runtimeText("local"), "running locally");
+  assert.equal(runtimeText("elsewhere"), "elsewhere");
 });

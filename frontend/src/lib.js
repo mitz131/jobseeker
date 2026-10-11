@@ -189,3 +189,8 @@ export function labelTags(labels) {
   }
   return tags;
 }
+
+/** The status line's "where it runs", from /api/status `running.where`. */
+export function runtimeText(where) {
+  return { kubernetes: "on Kubernetes", container: "in a container", local: "running locally" }[where] ?? where;
+}
