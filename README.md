@@ -198,6 +198,8 @@ refresh allow no second copy. Manifests: `deploy/k8s/jobseeker.yaml`.
 deploy/minikube-network.sh   # after every `minikube start`: lets pods out (see below)
 deploy/minikube-deploy.sh    # build, load into minikube, apply; first time: seed from data/
 deploy/minikube-deploy.sh --seed   # replace the pod's database with a copy of data/jobs.db
+deploy/minikube-backup.sh          # copy the pod's database to data/backups/jobs-<time>.db
+deploy/minikube-backup.sh --update-local   # ... and make it data/jobs.db (old one kept in data/backups/)
 kubectl -n jobseeker port-forward --address 0.0.0.0 svc/jobseeker 8091:8090
 ```
 
@@ -211,6 +213,9 @@ relays the proxy on `192.168.49.1:3128` (socat), which the pod uses as
 `HTTPS_PROXY`/`HTTP_PROXY`, for the career sites and for KEV.
 
 The pod's database is its own copy: crawls and labels there don't reach `data/jobs.db`.
+When the pod is where jobseeker runs, its volume holds the only current data (`minikube
+delete` erases it): back it up with `minikube-backup.sh`, and don't `--seed` from a stale
+`data/jobs.db`.
 
 ## Storage
 
