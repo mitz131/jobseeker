@@ -1,6 +1,7 @@
 # jobseeker on minikube: one pod (SQLite and the background refresh lock allow only one),
 # its data on a volume. Outbound traffic (career sites, KEV) goes through the sandbox
-# proxy via the relay that deploy/minikube-network.sh runs on 192.168.49.1:3128.
+# proxy via the relay that deploy/minikube-network.sh runs on 192.168.49.1:3128; the same
+# script relays sandbox port 8090 to the Service's node port 30090, for the browser.
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -74,8 +75,10 @@ metadata:
   name: jobseeker
   namespace: jobseeker
 spec:
+  type: NodePort          # a fixed port on the node: stays reachable across pod restarts
   selector:
     app: jobseeker
   ports:
     - port: 8090
       targetPort: 8090
+      nodePort: 30090

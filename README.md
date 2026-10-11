@@ -200,12 +200,15 @@ deploy/minikube-deploy.sh    # build, load into minikube, apply; first time: see
 deploy/minikube-deploy.sh --seed   # replace the pod's database with a copy of data/jobs.db
 deploy/minikube-backup.sh          # copy the pod's database to data/backups/jobs-<time>.db
 deploy/minikube-backup.sh --update-local   # ... and make it data/jobs.db (old one kept in data/backups/)
-kubectl -n jobseeker port-forward --address 0.0.0.0 svc/jobseeker 8091:8090
 ```
 
-and on the host `sbx ports <sandbox> --publish 8091:8091`, then http://localhost:8091.
+The page is then on sandbox port 8090 (on the host: `sbx ports <sandbox> --publish
+8090:8090`, http://localhost:8090). The Service has the fixed node port 30090, and
+`minikube-network.sh` relays sandbox port 8090 to it, so the page stays reachable
+across pod restarts and redeploys. `JOBSEEKER_PORT=8091 deploy/minikube-network.sh`
+picks another port, e.g. while a local `jobseeker serve` has 8090.
 
-Networking in the sandbox needs two fixes, both lost when minikube restarts:
+Networking in the sandbox needs two fixes (besides the web relay), all lost when minikube restarts:
 the node's `FORWARD` chain defaults to `DROP` (left by Docker in minikube's node
 image), which blocks every connection out of a pod, DNS included; and pods can't
 reach the sandbox proxy. `minikube-network.sh` sets the policy to `ACCEPT` and

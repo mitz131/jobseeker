@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Give minikube pods a way out, from inside the sandbox. Run after every `minikube start`
-# (neither change survives a restart). Idempotent.
+# Network plumbing for jobseeker on minikube, from inside the sandbox. Run after every
+# `minikube start` and sandbox restart (none of this survives one). Idempotent.
 #
 # 1. The node's FORWARD chain defaults to DROP (left by Docker in the kicbase image), so
 #    pods can't open any connection beyond the node, not even DNS. Set it to ACCEPT.
 # 2. Pods can't reach the sandbox proxy (gateway.docker.internal) themselves. Relay it on
 #    the sandbox's address in minikube's network: pods use http://<gateway>:3128.
+# 3. The browser: relay sandbox port $JOBSEEKER_PORT (default 8090, the port `sbx ports`
+#    publishes) to the jobseeker Service's node port 30090.
 set -euo pipefail
 
 gateway=$(docker network inspect minikube --format '{{(index .IPAM.Config 0).Gateway}}')
@@ -28,6 +30,22 @@ else
   sleep 1
   (exec 3<>"/dev/tcp/$gateway/$port") 2>/dev/null || { echo "relay did not start, see /tmp/jobseeker-relay.log"; exit 1; }
   echo "relay $gateway:$port -> $host:$upstream_port ($target), pid $!"
+fi
+
+web_port=${JOBSEEKER_PORT:-8090}
+node_ip=$(minikube ip)
+if (exec 3<>"/dev/tcp/127.0.0.1/$web_port") 2>/dev/null; then
+  if pgrep -f "TCP4-LISTEN:$web_port,.*TCP4:$node_ip:30090" > /dev/null; then
+    echo "web relay already listening on :$web_port"
+  else
+    echo "port $web_port is taken by something else (a local jobseeker serve?): no web relay;"
+    echo "stop that, or use another port: JOBSEEKER_PORT=8091 $0"
+  fi
+else
+  setsid nohup socat "TCP4-LISTEN:$web_port,reuseaddr,fork" "TCP4:$node_ip:30090" \
+    > /tmp/jobseeker-web-relay.log 2>&1 < /dev/null &
+  sleep 1
+  echo "web relay :$web_port -> $node_ip:30090 (jobseeker Service), pid $!"
 fi
 
 if [[ $gateway != 192.168.49.1 ]]; then

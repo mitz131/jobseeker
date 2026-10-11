@@ -47,5 +47,5 @@ seed
 kubectl -n "$ns" rollout restart deployment/jobseeker   # pick up the image just loaded
 kubectl -n "$ns" rollout status deployment/jobseeker --timeout=180s
 echo
-echo "Open it with:  kubectl -n $ns port-forward --address 0.0.0.0 svc/jobseeker 8091:8090"
-echo "and on the host:  sbx ports $(hostname) --publish 8091:8091   ->  http://localhost:8091"
+echo "Reachable on sandbox port 8090 once deploy/minikube-network.sh has run;"
+echo "on the host:  sbx ports $(hostname) --publish 8090:8090   ->  http://localhost:8090"
