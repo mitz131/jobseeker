@@ -3,7 +3,8 @@
 
 import {
   availableQuickFilters, debounce, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags, optionName,
-  questionName, quickFilterActive, runtimeText, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
+  questionName, quickFilterActive, runtimeText, shortLocation, stateFromSearch, stateToSearch, toggleLabel,
+  toggleQuickFilter,
 } from "./lib.js";
 
 const POLL_MS = 5000;
@@ -185,12 +186,17 @@ function renderJobs(data) {
       el("td", { className: "col-date", textContent: formatDate(job.first_seen) }),
       el("td", { className: "col-company", textContent: job.company }),
       el("td", {}, title, el("span", { className: "badge", textContent: "closed" }), tagsFor(job)),
-      el("td", { className: "col-location", textContent: job.location || "" }),
+      locationCell(job.location),
       distance);
     row.addEventListener("click", () => toggleDescription(row, job));
     return row;
   });
   $("jobs").querySelector("tbody").replaceChildren(...rows);
+}
+
+function locationCell(location) {
+  const { text, full } = shortLocation(location);
+  return el("td", { className: "col-location", textContent: text, title: full });
 }
 
 function tagsFor(job) {

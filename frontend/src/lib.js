@@ -88,6 +88,19 @@ export function formatKm(km) {
   return km === null || km === undefined ? "" : `${km.toFixed(1)} km`;
 }
 
+const SWISS = /,\s*(Switzerland|Schweiz|Suisse|Svizzera)$/i;
+export const LOCATIONS_SHOWN = 2;
+
+/** A job location for the table: at most LOCATIONS_SHOWN places (Swiss ones first)
+ *  and "+N more"; `full` is the whole list, for the tooltip ("" when nothing is cut). */
+export function shortLocation(location, shown = LOCATIONS_SHOWN) {
+  const places = (location || "").split(" / ").filter(Boolean);
+  if (places.length <= shown) return { text: location || "", full: "" };
+  const swiss = places.filter((p) => SWISS.test(p));
+  const ordered = [...swiss, ...places.filter((p) => !SWISS.test(p))];
+  return { text: `${ordered.slice(0, shown).join(" / ")} +${places.length - shown} more`, full: places.join("\n") };
+}
+
 export function debounce(fn, ms) {
   let timer;
   return (...args) => {

@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import {
   DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags,
-  quickFilterActive, runtimeText, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
+  quickFilterActive, runtimeText, shortLocation, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
 } from "../src/lib.js";
 
 test("state survives a round trip through the URL", () => {
@@ -111,4 +111,15 @@ test("runtime text for the status line", () => {
   assert.equal(runtimeText("kubernetes"), "on Kubernetes");
   assert.equal(runtimeText("local"), "running locally");
   assert.equal(runtimeText("elsewhere"), "elsewhere");
+});
+
+test("long location lists are cut to two places, Swiss first", () => {
+  const cisco = "Brussels, Belgium / Amsterdam, Netherlands / Bern, Switzerland / Zurich, Switzerland / Slovakia";
+  assert.deepEqual(shortLocation(cisco), {
+    text: "Bern, Switzerland / Zurich, Switzerland +3 more",
+    full: cisco.split(" / ").join("\n"),
+  });
+  assert.deepEqual(shortLocation("Kriens / Bern / Zurich").text, "Kriens / Bern +1 more");
+  assert.deepEqual(shortLocation("Lausanne / Vevey"), { text: "Lausanne / Vevey", full: "" });
+  assert.deepEqual(shortLocation(""), { text: "", full: "" });
 });

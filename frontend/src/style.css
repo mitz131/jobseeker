@@ -157,6 +157,7 @@ tr.job.closed .badge { display: inline; }
 .col-distance { text-align: right; }
 td.col-distance { font-variant-numeric: tabular-nums; }
 .via { display: block; color: var(--muted); font-size: 12px; }
+td.col-location[title]:not([title=""]) { cursor: help; }
 
 a { color: var(--accent); }
 
