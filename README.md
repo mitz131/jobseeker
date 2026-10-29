@@ -6,7 +6,7 @@ I built this project with Claude Code, following an architecture I am familiar w
 
 Technically, I wanted Python, FastAPI and a SQLite database because these are the things I most recently developed on myself. I can check the data directly with SQL outside the app. I settled on a simple UI with no framework because it seemed most readable to me and I wanted to keep the code manageable. I have the app working in a docker sandbox because that is where I'm developing for security reasons. The local model runs on the host, but in the long run I will move it to its own sandbox. 
 
-There are several aspects to the application. One is obviously the job search. The second is ad categorization by local AI, using Kev. Kev is a decision model similar to Jev, except that it's free and runs on local hardware. The third aspect is model evaluation. I wanted to pit Kev against Claude and see how close the performance would be. It turns out a few thresholds needed to be tuned, but in the end the agreement with Claude is around 95% which isn't bad for a small local model. 
+There are several aspects to the application. One is obviously the job search. The second is ad categorization by local AI, using Kev. Kev is a decision model similar to TypeSafe Jev, except that it's free and runs on local hardware. The third aspect is model evaluation. I wanted to pit Kev against Claude and see how close the performance would be. It turns out a few thresholds needed to be tuned, but in the end the agreement with Claude is around 95% which isn't bad for a small local model. 
 
 There are a few obvious limitations of course. Most of the connectors are API based, but some are just web page scrapers. Both can and will break if the site changes. That's fine for personal use, not for a commercial product. The distance to location is straight line, not a proper public transport calculation. Even within Lausanne or Geneva commute time depends on proximity to the actual train station, so straight-line is good enough. Finally the Kubernetes deployment may be overkill for the setup, however the purpose here is learning.
 
@@ -137,7 +137,7 @@ is enough (municipality mergers).
 `labels.toml` defines **question sets** (e.g. `v1`: seniority, job family,
 computer engineering, employment type, required languages, work model...) and
 **backends**: any server speaking the `/v1/systemone` API (KEV's own server,
-llama.cpp / llama.app with a KEV GGUF, the Jev API).
+llama.cpp / llama.app with a KEV GGUF, the TypeSafe Jev API).
 
 ```bash
 jobseeker labels run kev4b                       # label all stored jobs
@@ -240,3 +240,10 @@ delete` erases it): back it up with `minikube-backup.sh`, and don't `--seed` fro
 
 A job whose `last_seen` stops advancing has been taken down (or no longer
 matches your filter).
+
+## Credits
+
+- Labels by [Kev-4B](https://huggingface.co/jaredpalmer/kev-4b)
+  ([jaredpalmer/kev](https://github.com/jaredpalmer/kev), Apache-2.0), run locally.
+- Locality data: swisstopo's
+  [official register of localities](https://www.swisstopo.admin.ch/de/amtliches-ortschaftenverzeichnis).
