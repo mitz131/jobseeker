@@ -198,3 +198,11 @@ lang = "en"
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
 location_include = ["Switzerland"]   # also hires in Luxembourg and Jersey
+
+
+[[company]]
+name = "lausanne"
+label = "Ville de Lausanne"
+type = "lausanne"                # the city (the canton is etatdevaud); lausanne.ch's own job search
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
