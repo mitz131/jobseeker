@@ -2,7 +2,7 @@
 # Data (jobs.db, the swisstopo locality register) lives in /app/data, a volume:
 # the default paths in config.toml point there.
 # Pinned by digest, so every build starts from the same image; Dependabot proposes updates.
-FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
 
 WORKDIR /app
 # Dependencies first, from the lock file: exact versions, checked against their hashes,
