@@ -158,3 +158,12 @@ job_url = "https://www.piguetgalland.ch/offre-emploi?offer={id}"
 lang = "fr"                      # Swiss-only employer: no country filter needed
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "mirabaud"
+type = "smartrecruiters"         # SmartRecruiters' public API; mirabaud.com shows the same jobs
+company = "MirabaudCieSA"
+country = "ch"                   # the API's own country filter (ISO code)
+job_url = "https://www.mirabaud.com/en/careers/job-opportunities/job-details/{id}"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
