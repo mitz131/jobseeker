@@ -132,3 +132,20 @@ company = "banquepict"
 country = "Switzerland"          # read from each job's page: the feed has no location
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "lombardodier"
+type = "workday"
+base_url = "https://lombardodier.wd3.myworkdayjobs.com"
+tenant = "lombardodier"
+site = "Lombard_Odier_Careers"
+search = ""
+# No Country facet on this site, only cities: the Swiss ones by raw ID (IDs don't fail
+# when a city has no openings, names do). A new Swiss city needs adding: `jobseeker facets lombardodier`
+facets = { locations = [
+  "a77b9af6fe8901ae4c6df434b6004a15",   # Geneva
+  "a77b9af6fe89018e7bd8fc34b6006815",   # Lausanne
+  "a77b9af6fe89012ae655db34b600f514",   # Zürich
+] }
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
