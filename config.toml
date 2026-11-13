@@ -5,6 +5,8 @@ max_new_per_company = 200        # cap detail fetches per run; the rest are pick
 places_register = "data/AMTOVZ_CSV_LV95.csv"   # swisstopo locality register, for `near` / `places`
 places_file = "places.toml"               # hand-edited aliases and regions
 labels_file = "labels.toml"               # question sets and labelling backends
+# allowed_hosts = ["localhost", "127.0.0.1"]   # host names `serve` answers to (the default);
+#                                              # add e.g. a LAN address to reach it by that
 
 # label             : display name on the page (default: name), e.g. "Lombard Odier"
 #

@@ -203,6 +203,16 @@ export function labelTags(labels) {
   return tags;
 }
 
+/** The job's link if it is a web address; null otherwise (the server already drops
+ *  others, this is a second check, as a `javascript:` link would run in our page). */
+export function webLink(url) {
+  try {
+    return ["http:", "https:"].includes(new URL(url).protocol) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 // --- employers -------------------------------------------------------------------
 
 /** [{company, label}] sorted by display name, accents and case ignored ("État" sorts as "Etat"). */

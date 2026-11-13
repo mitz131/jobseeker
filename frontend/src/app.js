@@ -4,7 +4,7 @@
 import {
   availableQuickFilters, debounce, employersSummary, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags,
   optionName, questionName, quickFilterActive, runtimeText, shortLocation, sortEmployers, stateFromSearch,
-  stateToSearch, toggleLabel, toggleQuickFilter,
+  stateToSearch, toggleLabel, toggleQuickFilter, webLink,
 } from "./lib.js";
 
 const POLL_MS = 5000;
@@ -17,8 +17,9 @@ let pollTimer = null;
 let labelQuestions = []; // from /api/labels; empty when labels are not configured
 let companyLabels = {};   // company -> display name, from /api/status
 
-async function api(path, options) {
-  const resp = await fetch(path, options);
+async function api(path, options = {}) {
+  // the server only accepts POSTs with this header: other websites can't send it
+  const resp = await fetch(path, { ...options, headers: { "X-Jobseeker": "1", ...options.headers } });
   const body = await resp.json().catch(() => ({}));
   if (!resp.ok) {
     throw new Error(typeof body.detail === "string" ? body.detail : `Request failed (HTTP ${resp.status})`);
@@ -201,7 +202,9 @@ function renderJobs(data) {
   $("count").textContent = count;
 
   const rows = data.items.map((job) => {
-    const title = el("a", { href: job.url, target: "_blank", rel: "noopener", textContent: job.title || "(no title)" });
+    const href = webLink(job.url);
+    const title = el(href ? "a" : "span", { textContent: job.title || "(no title)" });
+    if (href) Object.assign(title, { href, target: "_blank", rel: "noopener" });
     title.addEventListener("click", (e) => e.stopPropagation()); // open the ad, don't toggle the row
     const distance = el("td", { className: "col-distance" });
     if (data.home) {

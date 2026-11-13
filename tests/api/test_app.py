@@ -5,7 +5,7 @@ from urllib.parse import quote
 import pytest
 from fastapi.testclient import TestClient
 
-from jobseeker.api.app import create_app
+from jobseeker.api.app import create_app, web_link
 from jobseeker.config import Config
 from jobseeker.db import JobStore
 from tests.test_places import HEADER, ROWS
@@ -64,7 +64,7 @@ def config(tmp_path):
 
 def client_for(config, max_age=FRESH, batch=lambda: None):
     app = create_app(config, batch=batch, max_age=max_age)
-    return TestClient(app), app.state.refresher
+    return TestClient(app, base_url="http://localhost", headers={"X-Jobseeker": "1"}), app.state.refresher
 
 
 def ids(resp):
@@ -205,7 +205,7 @@ def test_page_is_served_without_shadowing_the_api(config):
 
 def test_api_only_without_frontend(config):
     app = create_app(config, batch=lambda: None, max_age=FRESH, frontend_dir=None)
-    assert TestClient(app).get("/").status_code == 404
+    assert TestClient(app, base_url="http://localhost").get("/").status_code == 404
 
 
 def test_swagger_docs(config):
@@ -230,3 +230,35 @@ def test_runtime_in_a_pod(tmp_path, monkeypatch):
     assert (r.where, r.detail) == ("kubernetes", "pod jobseeker-84b97fc56b-vzg7l in namespace jobseeker")
     monkeypatch.setattr(app_module, "SERVICE_ACCOUNT_NAMESPACE", tmp_path / "missing")
     assert app_module.detect_runtime({"KUBERNETES_SERVICE_HOST": "10.96.0.1"}).detail == "pod jobseeker-84b97fc56b-vzg7l"
+
+
+# --- security ------------------------------------------------------------------
+
+def test_post_needs_the_page_header(config):
+    client, refresher = client_for(config, max_age=STALE)
+    resp = client.post("/api/refresh", headers={"X-Jobseeker": ""})
+    assert resp.status_code == 403
+    assert refresher.running is False
+
+
+def test_only_local_host_names_are_served(config):
+    client, _ = client_for(config)
+    assert client.get("/api/status").status_code == 200
+    assert client.get("/api/status", headers={"Host": "127.0.0.1:8090"}).status_code == 200
+    assert client.get("/api/status", headers={"Host": "attacker.example"}).status_code == 400
+
+
+def test_security_headers(config):
+    client, _ = client_for(config)
+    headers = client.get("/api/status").headers
+    assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
+    assert headers["X-Content-Type-Options"] == "nosniff"
+    # Swagger UI needs its CDN scripts
+    assert "Content-Security-Policy" not in client.get("/docs").headers
+
+
+def test_only_web_links_are_passed_on():
+    assert web_link("https://jobs.example/1") == "https://jobs.example/1"
+    assert web_link("HTTP://jobs.example/1") == "HTTP://jobs.example/1"
+    for bad in ("javascript:alert(1)", " javascript:alert(1)", "data:text/html,x", "", None):
+        assert web_link(bad) is None

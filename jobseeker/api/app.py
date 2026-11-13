@@ -3,18 +3,27 @@ background (crawl, then label the new jobs).
 
 Interactive documentation is served at /docs (Swagger UI) and /redoc; the web
 page (frontend/src) at /.
+
+The API has no login: it is meant for one person, on their own machine. What keeps
+other websites in the same browser out:
+- the POST endpoints need the `X-Jobseeker` header, which a cross-site page can't send
+  (that would need a CORS preflight, and the app allows none);
+- only the host names in `allowed_hosts` are served (against DNS rebinding);
+- the page may only load its own scripts and styles, and can't be framed.
 """
 
 import os
 import socket
-from collections.abc import Callable, Iterator
+from collections.abc import Awaitable, Callable, Iterator
 from datetime import timedelta
 from pathlib import Path
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from ..config import Config
 from ..crawler.http import HttpClient
@@ -26,6 +35,30 @@ from .refresh import Refresher
 
 # The repository's frontend/src (jobseeker/api/app.py -> repository root)
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "src"
+
+# Host names the app answers to; config.toml `allowed_hosts` replaces them
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
+SECURITY_HEADERS = {
+    "Content-Security-Policy": "default-src 'self'; object-src 'none'; base-uri 'none'; "
+                               "form-action 'self'; frame-ancestors 'none'",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
+# Swagger UI and ReDoc load their scripts from a CDN: no Content-Security-Policy there
+DOC_PATHS = ("/docs", "/redoc")
+
+
+def web_link(url: str | None) -> str | None:
+    """The job's link if it is an ordinary web address; None for anything else
+    (a `javascript:` link from a crawled page would run in ours when clicked)."""
+    return url if url and urlsplit(url).scheme.lower() in ("http", "https") else None
+
+
+def page_header(x_jobseeker: Annotated[str | None, Header(
+        description="Any value. Required on POST: other websites can't send it")] = None) -> None:
+    if not x_jobseeker:
+        raise HTTPException(403, "Missing X-Jobseeker header")
 
 
 class Label(BaseModel):
@@ -192,6 +225,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
     def summary(row, open_since: dict[str, str]) -> dict:
         started = open_since.get(row["company"])
         return {k: row[k] for k in JobSummary.model_fields if k in row.keys()} | {
+            "url": web_link(row["url"]),
             "company_label": company_labels.get(row["company"], row["company"]),
             "open": started is None or row["last_seen"] >= started}
 
@@ -301,7 +335,8 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
                        for r in db.latest_runs()],
         )
 
-    @app.post("/api/refresh", response_model=RefreshResult, summary="Start the batch in the background")
+    @app.post("/api/refresh", response_model=RefreshResult, summary="Start the batch in the background",
+              dependencies=[Depends(page_header)])
     def refresh(force: Annotated[bool, Query(description="Run even if the data is up to date")] = False) -> RefreshResult:
         """Starts a run if the data is older than the threshold (24 h), unless one is
         already running. Returns immediately; poll /api/status for progress."""
@@ -321,7 +356,8 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         return LabelInfo(backend=current.backend, question_set=current.questions.name,
                          thresholds=current.thresholds, questions=questions)
 
-    @app.post("/api/label", response_model=RefreshResult, summary="Label the jobs that have no labels yet")
+    @app.post("/api/label", response_model=RefreshResult, summary="Label the jobs that have no labels yet",
+              dependencies=[Depends(page_header)])
     def label_now() -> RefreshResult:
         """Starts labelling in the background (also part of every refresh), unless a
         background job is running. Returns immediately; poll /api/status for progress."""
@@ -329,6 +365,16 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             raise HTTPException(404, "Labels are not configured (labels.toml [current])")
         started, reason = refresher.start(batch=label_new)
         return RefreshResult(started=started, reason=reason)
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+        response = await call_next(request)
+        for name, value in SECURITY_HEADERS.items():
+            if name != "Content-Security-Policy" or not request.url.path.startswith(DOC_PATHS):
+                response.headers.setdefault(name, value)
+        return response
+
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=config.allowed_hosts or ALLOWED_HOSTS)
 
     # Mounted last, so the API routes and /docs take precedence over files
     if frontend_dir and frontend_dir.is_dir():

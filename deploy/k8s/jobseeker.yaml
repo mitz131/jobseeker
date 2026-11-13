@@ -57,6 +57,9 @@ spec:
             httpGet:
               path: /api/status
               port: 8090
+              httpHeaders:
+                - name: Host          # the app only answers to localhost (allowed_hosts)
+                  value: localhost
             periodSeconds: 10
           resources:
             requests:

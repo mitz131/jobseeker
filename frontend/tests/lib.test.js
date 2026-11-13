@@ -4,7 +4,7 @@ import { test } from "node:test";
 import {
   DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employersSummary, formatAge, formatDate, formatKm, jobPath,
   jobsQuery, labelTags, quickFilterActive, runtimeText, shortLocation, sortEmployers, stateFromSearch, stateToSearch,
-  toggleLabel, toggleQuickFilter,
+  toggleLabel, toggleQuickFilter, webLink,
 } from "../src/lib.js";
 
 test("state survives a round trip through the URL", () => {
@@ -137,4 +137,11 @@ test("employer dropdown summary", () => {
   assert.equal(employersSummary(["pictet", "mirabaud"], labels), "Pictet, Mirabaud");
   assert.equal(employersSummary(["pictet", "gone"], labels), "Pictet, gone");   // unknown: its name
   assert.equal(employersSummary(["a", "b", "c"], labels), "3 selected");
+});
+
+test("only web addresses become links", () => {
+  assert.equal(webLink("https://jobs.example/1"), "https://jobs.example/1");
+  for (const bad of ["javascript:alert(1)", " JavaScript:alert(1)", "data:text/html,x", "/relative", "", null]) {
+    assert.equal(webLink(bad), null, String(bad));
+  }
 });

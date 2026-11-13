@@ -75,7 +75,7 @@ def labelled(config, tmp_path):  # noqa: F811
 
 def client(config, label_client=None):
     app = create_app(config, batch=lambda: None, max_age=FRESH, label_client=label_client)
-    return TestClient(app), app.state.refresher
+    return TestClient(app, base_url="http://localhost", headers={"X-Jobseeker": "1"}), app.state.refresher
 
 
 def by_id(resp):

@@ -194,6 +194,18 @@ closed jobs stay in the database and are listed with `include_closed=true`.
 Run a single server process: the refresh lock doesn't reach across several
 workers.
 
+The API has no login: it's meant for one person on their own machine. Against
+other websites open in the same browser:
+
+- `POST` requests need an `X-Jobseeker` header (any value), which a page on
+  another site can't send. From the command line:
+  `curl -X POST -H 'X-Jobseeker: 1' 'http://127.0.0.1:8090/api/refresh?force=true'`
+- The app only answers to `localhost` and `127.0.0.1` (protection against DNS
+  rebinding). To reach it by another name or address, list them under
+  `allowed_hosts` in `config.toml`.
+- The page may only load its own scripts and styles, and can't be shown in a
+  frame on another site; job links are kept only if they are `http(s)` addresses.
+
 ## Daily schedule
 
 ```cron

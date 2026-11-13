@@ -41,6 +41,11 @@ class Config:
     def max_new_per_company(self) -> int:
         return self.settings.get("max_new_per_company", 200)
 
+    @property
+    def allowed_hosts(self) -> list[str] | None:
+        """Host names `serve` answers to; None: the app's default (localhost only)."""
+        return self.settings.get("allowed_hosts")
+
     def companies(self, names: list[str] | None = None) -> list[dict]:
         """Enabled companies, or exactly the named ones (even if disabled)."""
         companies = [c for c in self.data.get("company", []) if c.get("enabled", True) or names]
