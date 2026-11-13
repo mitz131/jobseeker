@@ -18,10 +18,26 @@ Python 3.11+.
 
 ```bash
 python -m venv .venv            # in this sandbox: python3 -m venv --copies .venv
-.venv/bin/pip install -e ".[dev]"
+.venv/bin/pip install --require-hashes -r requirements-dev.txt
+.venv/bin/pip install --no-deps -e .
 ```
 
-This installs the `jobseeker` command (`python -m jobseeker` works too) and pytest.
+This installs the exact, tested dependency versions, the `jobseeker` command
+(`python -m jobseeker` works too) and pytest.
+
+The versions are locked in `requirements.txt` (the app; the Docker image uses it)
+and `requirements-dev.txt` (plus the test tools), each with the packages' hashes.
+`pyproject.toml` keeps the loose requirements. After changing those, or to take
+newer versions, regenerate both files:
+
+```bash
+uv pip compile pyproject.toml --python-version 3.14 --generate-hashes --universal -o requirements.txt
+uv pip compile pyproject.toml --extra dev --python-version 3.14 --generate-hashes --universal -o requirements-dev.txt
+```
+
+CI (`.github/workflows/ci.yml`) runs the tests and checks the locked versions for
+known vulnerabilities with `pip-audit`, also weekly; Dependabot proposes updates for
+the Python packages, the Docker base image and the CI actions.
 
 `data/` is not in git. `data/jobs.db` is created on the first `jobseeker run`.
 For distance search, download swisstopo's official locality register
@@ -217,7 +233,7 @@ other websites open in the same browser:
 
 ## Kubernetes (minikube in the sandbox)
 
-The image (`Dockerfile`) runs `jobseeker serve`; the data (`jobs.db` and the swisstopo
+The image (`Dockerfile`) runs `python -m jobseeker serve`; the data (`jobs.db` and the swisstopo
 register) lives on a volume at `/app/data`. One pod only: SQLite and the background
 refresh allow no second copy. Manifests: `deploy/k8s/jobseeker.yaml`.
 

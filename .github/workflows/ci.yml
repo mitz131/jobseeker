@@ -1,0 +1,38 @@
+# Tests on every push and pull request; the dependency audit also runs weekly, so a
+# newly published vulnerability in a locked version shows up without a code change.
+name: ci
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.14" }
+      - uses: actions/setup-node@v5
+        with: { node-version: "22" }
+      - name: Install the locked dependencies
+        run: |
+          pip install --require-hashes -r requirements-dev.txt
+          pip install --no-deps -e .
+      - run: python -m pytest -q
+      - run: node --test
+        working-directory: frontend
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.14" }
+      - name: Known vulnerabilities in the locked versions
+        run: |
+          pip install pip-audit
+          pip-audit --require-hashes --disable-pip -r requirements-dev.txt
