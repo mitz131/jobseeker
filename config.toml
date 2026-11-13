@@ -149,3 +149,12 @@ facets = { locations = [
 ] }
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "piguetgalland"
+type = "johdi"                   # Johdi Suite ATS, called by piguetgalland.ch/carrieres
+api_url = "https://ats.johdisuite.ch/api/company/eyJpdiI6ImlzTU9rOE51UG9nbWtBRUZvSTkrb0E9PSIsInZhbHVlIjoiMTU1dXlnQXlTRnZQZWNzWUI0c2h1UT09IiwibWFjIjoiMzQzN2JkOTIwODU0ZmZhMGQ1OWM2NWFiYTEyNmFkMWUzMTk2Mzc0ZWE3M2JmNTMwOWMxOGU3YTE3YzRiN2UyNyIsInRhZyI6IiJ9/publicationFlows/web"
+job_url = "https://www.piguetgalland.ch/offre-emploi?offer={id}"
+lang = "fr"                      # Swiss-only employer: no country filter needed
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

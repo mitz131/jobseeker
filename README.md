@@ -77,6 +77,7 @@ frontend/
 | Crédit Agricole | groupecreditagricole.jobs (WordPress) | HTML + JSON-LD |
 | Pictet       | SAP SuccessFactors classic portal | XML feed + HTML     |
 | Lombard Odier | Workday                          | JSON API            |
+| Piguet Galland | Johdi Suite                     | JSON API            |
 
 Adding a company on a supported platform is just a config entry. Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`
