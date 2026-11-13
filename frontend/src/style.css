@@ -92,17 +92,37 @@ input, select {
 input.narrow { width: 5em; }
 input:disabled, select:disabled { opacity: 0.5; }
 
-.companies {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  flex-basis: 100%;
+/* Employer filter: a <details> dropdown with checkboxes, labelled like the other fields */
+.field { display: flex; gap: 6px; align-items: center; }
+.dropdown { position: relative; }
+.dropdown > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg);
+  white-space: nowrap;
 }
-.companies legend { float: left; margin-right: 8px; color: var(--muted); }
-.companies label { color: var(--fg); }
+.dropdown > summary::-webkit-details-marker { display: none; }
+.dropdown > summary::after { content: " ▾"; color: var(--muted); }
+.dropdown[open] > summary::after { content: " ▴"; }
+.dropdown-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 230px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
+}
+.dropdown-actions { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 6px; }
+.dropdown-list { display: flex; flex-direction: column; gap: 3px; max-height: min(60vh, 420px); overflow-y: auto; }
+.filters .dropdown-list label { color: var(--fg); }
 
 .quick { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; flex-basis: 100%; }
 .quick .legend { color: var(--muted); margin-right: 4px; }

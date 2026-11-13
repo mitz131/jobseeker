@@ -22,6 +22,7 @@ places_file = "places.toml"
 [[company]]
 name = "acme"
 type = "workday"
+label = "ACME Corp"
 '''
 PLACES = '''
 [regions]
@@ -103,6 +104,12 @@ def test_max_km_excludes_far_and_unknown(config):
     assert sorted(ids(client.get("/api/jobs", params={"home": "Vevey", "max_km": 5}))) == ["1", "2"]
 
 
+def test_jobs_carry_the_company_display_name(config):
+    client, _ = client_for(config)
+    names = {(j["company"], j["company_label"]) for j in client.get("/api/jobs").json()["items"]}
+    assert names == {("acme", "ACME Corp"), ("beta", "beta")}
+
+
 def test_company_and_location_filters(config):
     client, _ = client_for(config)
     assert sorted(ids(client.get("/api/jobs", params={"company": "beta"}))) == ["/job/Zurich/Dev_JR1", "5"]
@@ -143,6 +150,8 @@ def test_status(config):
     assert body["last_update"] == "2026-10-03T09:05:00+00:00"
     assert body["stale"] is True
     assert [c["company"] for c in body["companies"]] == ["acme", "beta"]
+    # display names: the config `label`, else the name (beta is not in the config)
+    assert [c["label"] for c in body["companies"]] == ["ACME Corp", "beta"]
     assert body["refresh_running"] is False
 
 

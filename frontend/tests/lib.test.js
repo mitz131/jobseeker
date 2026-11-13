@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags,
-  quickFilterActive, runtimeText, shortLocation, stateFromSearch, stateToSearch, toggleLabel, toggleQuickFilter,
+  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employersSummary, formatAge, formatDate, formatKm, jobPath,
+  jobsQuery, labelTags, quickFilterActive, runtimeText, shortLocation, sortEmployers, stateFromSearch, stateToSearch,
+  toggleLabel, toggleQuickFilter,
 } from "../src/lib.js";
 
 test("state survives a round trip through the URL", () => {
@@ -122,4 +123,18 @@ test("long location lists are cut to two places, Swiss first", () => {
   assert.deepEqual(shortLocation("Kriens / Bern / Zurich").text, "Kriens / Bern +1 more");
   assert.deepEqual(shortLocation("Lausanne / Vevey"), { text: "Lausanne / Vevey", full: "" });
   assert.deepEqual(shortLocation(""), { text: "", full: "" });
+});
+
+test("employers sort by display name, ignoring accents", () => {
+  const sorted = sortEmployers([{ company: "salt", label: "Salt" }, { company: "etatdevaud", label: "État de Vaud" },
+                                { company: "bcv", label: "BCV" }, { company: "lombardodier", label: "Lombard Odier" }]);
+  assert.deepEqual(sorted.map((e) => e.company), ["bcv", "etatdevaud", "lombardodier", "salt"]);
+});
+
+test("employer dropdown summary", () => {
+  const labels = { pictet: "Pictet", mirabaud: "Mirabaud" };
+  assert.equal(employersSummary([], labels), "All");
+  assert.equal(employersSummary(["pictet", "mirabaud"], labels), "Pictet, Mirabaud");
+  assert.equal(employersSummary(["pictet", "gone"], labels), "Pictet, gone");   // unknown: its name
+  assert.equal(employersSummary(["a", "b", "c"], labels), "3 selected");
 });

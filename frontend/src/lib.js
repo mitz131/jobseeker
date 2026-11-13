@@ -203,6 +203,20 @@ export function labelTags(labels) {
   return tags;
 }
 
+// --- employers -------------------------------------------------------------------
+
+/** [{company, label}] sorted by display name, accents and case ignored ("État" sorts as "Etat"). */
+export function sortEmployers(employers) {
+  return [...employers].sort((a, b) => a.label.localeCompare(b.label, "fr", { sensitivity: "base" }));
+}
+
+/** The closed dropdown's text: nothing ticked means no filter. */
+export function employersSummary(selected, labels) {
+  if (!selected.length) return "All";
+  if (selected.length <= 2) return selected.map((c) => labels[c] ?? c).join(", ");
+  return `${selected.length} selected`;
+}
+
 /** The status line's "where it runs", from /api/status `running.where`. */
 export function runtimeText(where) {
   return { kubernetes: "on Kubernetes", container: "in a container", local: "running locally" }[where] ?? where;

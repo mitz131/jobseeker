@@ -35,6 +35,7 @@ class Label(BaseModel):
 
 class JobSummary(BaseModel):
     company: str
+    company_label: str  # display name: config `label`, else `company`
     job_id: str
     title: str | None
     location: str | None
@@ -60,6 +61,7 @@ class Job(JobSummary):
 
 class CompanyStatus(BaseModel):
     company: str
+    label: str  # display name: config `label`, else `company`
     last_run_finished: str | None
     listed: int | None
     new: int | None
@@ -179,6 +181,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             s.close()
 
     runtime = detect_runtime()
+    company_labels = config.company_labels()
     refresher = Refresher(batch or crawl, last_update, max_age)
     app = FastAPI(title="jobseeker", version="0.1.0",
                   description="Swiss job openings from employer career sites, "
@@ -189,6 +192,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
     def summary(row, open_since: dict[str, str]) -> dict:
         started = open_since.get(row["company"])
         return {k: row[k] for k in JobSummary.model_fields if k in row.keys()} | {
+            "company_label": company_labels.get(row["company"], row["company"]),
             "open": started is None or row["last_seen"] >= started}
 
     def label_filter(values: list[str]) -> dict[str, set[str]]:
@@ -291,7 +295,8 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             unlabelled=(db.conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
                         - len(current_labels(db.conn, current))) if current else None,
             running=runtime,
-            companies=[CompanyStatus(company=r["company"], last_run_finished=r["finished_at"],
+            companies=[CompanyStatus(company=r["company"], label=company_labels.get(r["company"], r["company"]),
+                                     last_run_finished=r["finished_at"],
                                      listed=r["listed"], new=r["new"], error=r["error"])
                        for r in db.latest_runs()],
         )

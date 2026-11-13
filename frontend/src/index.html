@@ -36,9 +36,19 @@
       </select>
     </label>
     <label class="check"><input id="include-closed" type="checkbox"> Include closed</label>
-    <fieldset id="companies" class="companies">
-      <legend>Employers</legend>
-    </fieldset>
+    <div class="field">
+      <span class="muted" id="companies-label">Employers</span>
+      <details id="companies" class="dropdown">
+        <summary aria-labelledby="companies-label companies-summary"><span id="companies-summary">All</span></summary>
+        <div class="dropdown-panel">
+          <div class="dropdown-actions">
+            <span class="muted">None ticked: all employers</span>
+            <button id="companies-clear" type="button" class="link" hidden>Clear</button>
+          </div>
+          <div id="companies-list" class="dropdown-list"></div>
+        </div>
+      </details>
+    </div>
     <div id="quick" class="quick" hidden>
       <span class="legend">Quick filters</span>
       <button id="clear-labels" type="button" class="link" hidden>clear label filters</button>

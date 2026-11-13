@@ -51,6 +51,10 @@ class Config:
                 raise ValueError(f"Unknown company: {', '.join(sorted(missing))}")
         return companies
 
+    def company_labels(self) -> dict[str, str]:
+        """Display name per company: its `label`, else its config name."""
+        return {c["name"]: c.get("label", c["name"]) for c in self.data.get("company", [])}
+
     @cached_property
     def places(self) -> Places | None:
         """None when the locality register hasn't been downloaded."""

@@ -2,9 +2,9 @@
 // is always inserted with textContent, never as HTML.
 
 import {
-  availableQuickFilters, debounce, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags, optionName,
-  questionName, quickFilterActive, runtimeText, shortLocation, stateFromSearch, stateToSearch, toggleLabel,
-  toggleQuickFilter,
+  availableQuickFilters, debounce, employersSummary, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags,
+  optionName, questionName, quickFilterActive, runtimeText, shortLocation, sortEmployers, stateFromSearch,
+  stateToSearch, toggleLabel, toggleQuickFilter,
 } from "./lib.js";
 
 const POLL_MS = 5000;
@@ -15,6 +15,7 @@ let lastStatus = null;
 let jobsRequest = 0; // number of the latest /api/jobs request; older answers are dropped
 let pollTimer = null;
 let labelQuestions = []; // from /api/labels; empty when labels are not configured
+let companyLabels = {};   // company -> display name, from /api/status
 
 async function api(path, options) {
   const resp = await fetch(path, options);
@@ -65,19 +66,47 @@ function updateDistanceControls() {
 function onFiltersChanged() {
   updateDistanceControls();
   readControls();
+  showCompanySummary();
   window.history.replaceState(null, "", window.location.pathname + stateToSearch(state));
   loadJobs();
 }
 
-function buildCompanyFilter(names) {
-  const box = $("companies");
-  box.querySelectorAll("label").forEach((l) => l.remove());
-  const all = [...new Set([...names, ...state.companies])].sort();
-  for (const name of all) {
-    const input = el("input", { type: "checkbox", value: name, checked: state.companies.includes(name) });
+/** The employer dropdown: one checkbox per employer, sorted by display name. Companies
+ *  only in the URL (no longer crawled) keep a box, so the filter can be undone. */
+function buildCompanyFilter(companies) {
+  companyLabels = Object.fromEntries(companies.map((c) => [c.company, c.label]));
+  const known = new Set(companies.map((c) => c.company));
+  const extra = state.companies.filter((c) => !known.has(c)).map((c) => ({ company: c, label: c }));
+  const boxes = sortEmployers([...companies, ...extra]).map(({ company, label }) => {
+    const input = el("input", { type: "checkbox", value: company, checked: state.companies.includes(company) });
     input.addEventListener("change", onFiltersChanged);
-    box.append(el("label", { className: "check" }, input, ` ${name}`));
-  }
+    return el("label", { className: "check" }, input, ` ${label}`);
+  });
+  $("companies-list").replaceChildren(...boxes);
+  showCompanySummary();
+}
+
+function showCompanySummary() {
+  $("companies-summary").textContent = employersSummary(state.companies, companyLabels);
+  $("companies-clear").hidden = !state.companies.length;
+}
+
+function clearCompanies() {
+  $("companies-list").querySelectorAll("input:checked").forEach((i) => { i.checked = false; });
+  onFiltersChanged();
+}
+
+/** Close the dropdown on a click outside it, or on Esc. */
+function closeDropdownOutside(dropdown) {
+  document.addEventListener("click", (e) => {
+    if (dropdown.open && !dropdown.contains(e.target)) dropdown.open = false;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && dropdown.open) {
+      dropdown.open = false;
+      dropdown.querySelector("summary").focus();
+    }
+  });
 }
 
 // --- label filters ---------------------------------------------------------------
@@ -184,7 +213,7 @@ function renderJobs(data) {
     }
     const row = el("tr", { className: job.open ? "job" : "job closed" },
       el("td", { className: "col-date", textContent: formatDate(job.first_seen) }),
-      el("td", { className: "col-company", textContent: job.company }),
+      el("td", { className: "col-company", textContent: job.company_label }),
       el("td", {}, title, el("span", { className: "badge", textContent: "closed" }), tagsFor(job)),
       locationCell(job.location),
       distance);
@@ -248,7 +277,7 @@ function renderStatus(s) {
   } else if (s.refresh_error) {
     banner.textContent = `The last update failed: ${s.refresh_error}`;
   } else if (failed.length) {
-    banner.textContent = `Last update failed for ${failed.map((c) => `${c.company} (${c.error})`).join(", ")}.`;
+    banner.textContent = `Last update failed for ${failed.map((c) => `${c.label} (${c.error})`).join(", ")}.`;
   } else {
     banner.textContent = "";
   }
@@ -326,6 +355,8 @@ async function start() {
   $("filters").addEventListener("submit", (e) => e.preventDefault());
   $("refresh").addEventListener("click", () => refresh(true));
   $("clear-labels").addEventListener("click", () => setLabels([]));
+  $("companies-clear").addEventListener("click", clearCompanies);
+  closeDropdownOutside($("companies"));
 
   try {
     buildLabelFilters((await api("/api/labels")).questions);
@@ -335,7 +366,7 @@ async function start() {
   loadJobs();
   try {
     const s = await loadStatus();
-    buildCompanyFilter(s.companies.map((c) => c.company));
+    buildCompanyFilter(s.companies);
     if (s.refresh_running) pollUntilDone();
     else if (s.stale) await refresh(false); // older than 24 h: update (and label) in the background
     else if (s.unlabelled) await labelNow(); // up to date, but some jobs have no labels yet
