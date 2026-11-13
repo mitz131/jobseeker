@@ -2,10 +2,25 @@
 # its data on a volume. Outbound traffic (career sites, KEV) goes through the sandbox
 # proxy via the relay that deploy/minikube-network.sh runs on 192.168.49.1:3128; the same
 # script relays sandbox port 8090 to the Service's node port 30090, for the browser.
+#
+# Locked down: the namespace enforces the "restricted" Pod Security Standard (non-root,
+# no privilege escalation, no Linux capabilities, seccomp), the root filesystem is
+# read-only (only /app/data and /tmp are writable), the pod gets no Kubernetes API
+# token, and a NetworkPolicy lets it talk only to the proxy relay.
+#
+# The policy needs a network plugin that enforces it: minikube's default (kindnet)
+# accepts it and ignores it; `minikube start --cni=calico` enforces it. Here it's left
+# unenforced on purpose: minikube runs inside a Docker sandbox whose firewall allows
+# only approved domains for everything leaving it, and the cluster has no other
+# workloads to protect. On a shared cluster, the policy is what keeps a compromised
+# pod away from its neighbours and the Kubernetes API.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: jobseeker
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -35,15 +50,33 @@ spec:
       labels:
         app: jobseeker
     spec:
+      automountServiceAccountToken: false   # the app never calls the Kubernetes API
+      enableServiceLinks: false             # no env variables for every Service
       securityContext:
-        fsGroup: 1000       # the image's jobseeker user can write the volume
+        runAsNonRoot: true
+        runAsUser: 1000     # the image's jobseeker user
+        runAsGroup: 1000
+        fsGroup: 1000       # ... can write the volume
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: jobseeker
           image: jobseeker:dev
           imagePullPolicy: Never   # loaded with `minikube image load`, no registry
           ports:
             - containerPort: 8090
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           env:
+            - name: POD_NAMESPACE       # shown on the page; instead of the API token's file
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PYTHONDONTWRITEBYTECODE   # the code is read-only: no .pyc files
+              value: "1"
             - name: HTTPS_PROXY
               value: http://192.168.49.1:3128
             - name: HTTP_PROXY          # KEV is plain http (host.docker.internal:8009)
@@ -53,6 +86,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+            - name: tmp               # SQLite's temporary files, backup snapshots
+              mountPath: /tmp
           readinessProbe:
             httpGet:
               path: /api/status
@@ -66,11 +101,16 @@ spec:
               cpu: 100m
               memory: 128Mi
             limits:
+              cpu: "1"
               memory: 512Mi
+              ephemeral-storage: 256Mi
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: jobseeker-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 200Mi
 ---
 apiVersion: v1
 kind: Service
@@ -85,3 +125,25 @@ spec:
     - port: 8090
       targetPort: 8090
       nodePort: 30090
+---
+# In: only the web port. Out: only the proxy relay (career sites and KEV both go
+# through it, by IP address, so the pod needs no DNS either).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jobseeker
+  namespace: jobseeker
+spec:
+  podSelector:
+    matchLabels:
+      app: jobseeker
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - port: 8090
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 192.168.49.1/32
+      ports:
+        - port: 3128

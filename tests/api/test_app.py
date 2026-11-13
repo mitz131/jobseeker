@@ -220,15 +220,11 @@ def test_status_says_where_it_runs(config):
     assert running["where"] in ("kubernetes", "container", "local") and running["detail"]
 
 
-def test_runtime_in_a_pod(tmp_path, monkeypatch):
+def test_runtime_in_a_pod(monkeypatch):
     from jobseeker.api import app as app_module
-    ns = tmp_path / "namespace"
-    ns.write_text("jobseeker\n")
-    monkeypatch.setattr(app_module, "SERVICE_ACCOUNT_NAMESPACE", ns)
     monkeypatch.setattr(app_module.socket, "gethostname", lambda: "jobseeker-84b97fc56b-vzg7l")
-    r = app_module.detect_runtime({"KUBERNETES_SERVICE_HOST": "10.96.0.1"})
+    r = app_module.detect_runtime({"KUBERNETES_SERVICE_HOST": "10.96.0.1", "POD_NAMESPACE": "jobseeker"})
     assert (r.where, r.detail) == ("kubernetes", "pod jobseeker-84b97fc56b-vzg7l in namespace jobseeker")
-    monkeypatch.setattr(app_module, "SERVICE_ACCOUNT_NAMESPACE", tmp_path / "missing")
     assert app_module.detect_runtime({"KUBERNETES_SERVICE_HOST": "10.96.0.1"}).detail == "pod jobseeker-84b97fc56b-vzg7l"
 
 

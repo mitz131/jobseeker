@@ -26,7 +26,7 @@ seed() {
   kubectl -n "$ns" wait --for=delete pod -l app=jobseeker --timeout=120s || true
   # a throwaway pod with the volume; our own image, since the node can't pull others
   kubectl -n "$ns" run seed --image="$image" --image-pull-policy=Never --restart=Never \
-    --overrides='{"spec":{"securityContext":{"fsGroup":1000},"containers":[{"name":"seed","image":"'"$image"'","imagePullPolicy":"Never","command":["sleep","600"],"volumeMounts":[{"name":"data","mountPath":"/app/data"}]}],"volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"jobseeker-data"}}]}}'
+    --overrides='{"spec":{"automountServiceAccountToken":false,"securityContext":{"runAsNonRoot":true,"runAsUser":1000,"runAsGroup":1000,"fsGroup":1000,"seccompProfile":{"type":"RuntimeDefault"}},"containers":[{"name":"seed","image":"'"$image"'","imagePullPolicy":"Never","command":["sleep","600"],"securityContext":{"allowPrivilegeEscalation":false,"readOnlyRootFilesystem":true,"capabilities":{"drop":["ALL"]}},"volumeMounts":[{"name":"data","mountPath":"/app/data"}]}],"volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"jobseeker-data"}}]}}'
   kubectl -n "$ns" wait --for=condition=Ready pod/seed --timeout=120s
   if [[ $force_seed == --seed ]] || ! volume_has_db; then
     snapshot=$(mktemp -d)/jobs.db

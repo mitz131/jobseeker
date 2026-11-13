@@ -106,18 +106,13 @@ class Runtime(BaseModel):
     detail: str  # e.g. "pod jobseeker-6776b5f49-5z9l8 in namespace jobseeker", or the host name
 
 
-SERVICE_ACCOUNT_NAMESPACE = Path("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
-
-
 def detect_runtime(env=os.environ) -> Runtime:
     """Where this server runs: Kubernetes sets KUBERNETES_SERVICE_HOST in every pod,
-    Docker and Podman leave /.dockerenv or /run/.containerenv."""
+    Docker and Podman leave /.dockerenv or /run/.containerenv. The namespace comes from
+    POD_NAMESPACE, set by the deployment (the pod has no API token to read it from)."""
     host = socket.gethostname()
     if env.get("KUBERNETES_SERVICE_HOST"):
-        try:
-            namespace = SERVICE_ACCOUNT_NAMESPACE.read_text().strip()
-        except OSError:
-            namespace = None
+        namespace = env.get("POD_NAMESPACE")
         return Runtime(where="kubernetes",
                        detail=f"pod {host}" + (f" in namespace {namespace}" if namespace else ""))
     if Path("/.dockerenv").exists() or Path("/run/.containerenv").exists():
