@@ -123,3 +123,12 @@ base_url = "https://groupecreditagricole.jobs"
 location_id = 176                # the portal's code for Switzerland (Suisse)
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "pictet"
+type = "sfcareer"                # classic SuccessFactors portal, linked from pictet.com/careers
+host = "https://career012.successfactors.eu"
+company = "banquepict"
+country = "Switzerland"          # read from each job's page: the feed has no location
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

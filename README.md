@@ -75,6 +75,7 @@ frontend/
 | Cisco        | Phenom (careers.cisco.com)        | JSON API            |
 | Swisscom     | Workday                           | JSON API            |
 | Crédit Agricole | groupecreditagricole.jobs (WordPress) | HTML + JSON-LD |
+| Pictet       | SAP SuccessFactors classic portal | XML feed + HTML     |
 
 Adding a company on a supported platform is just a config entry. Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`

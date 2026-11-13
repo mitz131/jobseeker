@@ -2,6 +2,7 @@ from .creditagricole import CreditAgricoleSource
 from .jobcloud import JobCloudSource
 from .oracle import OracleSource
 from .phenom import PhenomSource
+from .sfcareer import SFCareerSource
 from .successfactors import SuccessFactorsSource
 from .vaudoise import VaudoiseSource
 from .workday import WorkdaySource
@@ -14,6 +15,7 @@ SOURCE_TYPES = {
     "oracle": OracleSource,
     "jobcloud": JobCloudSource,
     "creditagricole": CreditAgricoleSource,
+    "sfcareer": SFCareerSource,
 }
 
 
