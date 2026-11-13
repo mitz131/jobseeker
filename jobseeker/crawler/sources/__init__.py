@@ -1,3 +1,4 @@
+from .creditagricole import CreditAgricoleSource
 from .jobcloud import JobCloudSource
 from .oracle import OracleSource
 from .phenom import PhenomSource
@@ -12,6 +13,7 @@ SOURCE_TYPES = {
     "vaudoise": VaudoiseSource,
     "oracle": OracleSource,
     "jobcloud": JobCloudSource,
+    "creditagricole": CreditAgricoleSource,
 }
 
 

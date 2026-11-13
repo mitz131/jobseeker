@@ -115,3 +115,11 @@ site = "SwisscomExternalCareers"
 search = ""                      # Swiss-only employer: no country filter needed
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "creditagricole"
+type = "creditagricole"          # group portal: Indosuez, CACEIS, CA-CIB... in one list
+base_url = "https://groupecreditagricole.jobs"
+location_id = 176                # the portal's code for Switzerland (Suisse)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
