@@ -36,8 +36,10 @@ uv pip compile pyproject.toml --extra dev --python-version 3.14 --generate-hashe
 ```
 
 CI (`.github/workflows/ci.yml`) runs the tests and checks the locked versions for
-known vulnerabilities with `pip-audit`, also weekly; Dependabot proposes updates for
-the Python packages, the Docker base image and the CI actions.
+known vulnerabilities with `pip-audit`, also weekly. GitHub's Dependabot alerts and
+security updates are on as well: they propose a fix only when a locked version has a
+published vulnerability. Routine version updates are done by hand, on purpose: a
+release that is only days old is where a hijacked package would show up.
 
 `data/` is not in git. `data/jobs.db` is created on the first `jobseeker run`.
 For distance search, download swisstopo's official locality register
