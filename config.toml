@@ -186,3 +186,15 @@ country = "ch"                   # the API's own country filter (ISO code)
 job_url = "https://www.mirabaud.com/en/careers/job-opportunities/job-details/{id}"
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+
+[[company]]
+name = "ubp"
+label = "UBP"
+type = "oracle"                  # Union Bancaire Privée: Oracle Recruiting Cloud, linked from ubp.com
+host = "https://iaadtu.fa.ocs.oraclecloud.eu"
+sites = ["CX_1"]
+lang = "en"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+location_include = ["Switzerland"]   # also hires in Luxembourg and Jersey
