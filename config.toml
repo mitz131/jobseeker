@@ -25,6 +25,7 @@ labels_file = "labels.toml"               # question sets and labelling backends
 [[company]]
 name = "salesforce"
 label = "Salesforce"
+default_place = "Zürich"   # largest Swiss office (Lausanne too); only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://salesforce.wd12.myworkdayjobs.com"
 tenant = "salesforce"
@@ -105,6 +106,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "salt"
 label = "Salt"
+default_place = "Prilly"   # head office, new tower at Prilly-Malley station (moved from Renens); only for jobs whose location can't be placed
 type = "jobcloud"                # job list hosted by JobCloud, linked from salt.ch/careers
 company = "salt-mobile-sa"
 lang = "fr"                      # Swiss-only employer: no country filter needed
@@ -180,6 +182,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "piguetgalland"
 label = "Piguet Galland"
+default_place = "Genève"   # main office; only for jobs whose location can't be placed
 type = "johdi"                   # Johdi Suite ATS, called by piguetgalland.ch/carrieres
 api_url = "https://ats.johdisuite.ch/api/company/eyJpdiI6ImlzTU9rOE51UG9nbWtBRUZvSTkrb0E9PSIsInZhbHVlIjoiMTU1dXlnQXlTRnZQZWNzWUI0c2h1UT09IiwibWFjIjoiMzQzN2JkOTIwODU0ZmZhMGQ1OWM2NWFiYTEyNmFkMWUzMTk2Mzc0ZWE3M2JmNTMwOWMxOGU3YTE3YzRiN2UyNyIsInRhZyI6IiJ9/publicationFlows/web"
 job_url = "https://www.piguetgalland.ch/offre-emploi?offer={id}"
