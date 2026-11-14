@@ -27,8 +27,10 @@ labels: ["employer"]
 2. **Switzerland only.** Prefer the platform's own country or location filter, so only Swiss
    jobs are listed. Otherwise `location_include`. Never list a large employer's whole worldwide
    catalogue on every run.
-3. `default_place` only if Swiss jobs come with no usable location ("Switzerland"), set to the
-   head office, with a comment.
+3. `default_place`: if the employer has a clear Swiss head office (or a single Swiss office),
+   set it to that locality, with a comment. It is only used for jobs whose location can't be
+   placed (e.g. just "Switzerland"), and the page marks it as assumed. No clear head office
+   (several Swiss sites of equal weight): leave it out, and say so in the PR.
 4. A new source only if no existing one fits: `jobseeker/crawler/sources/<type>.py`, registered
    in `sources/__init__.py`, with tests on **made-up** data in `tests/crawler/`.
 5. A row in the README employer table.
