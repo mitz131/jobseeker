@@ -102,6 +102,7 @@ frontend/
 | Edmond de Rothschild | Oracle Recruiting Cloud     | JSON API            |
 | Ville de Lausanne | lausanne.ch job search (Elasticsearch) | JSON API |
 | Trafigura    | Workday                           | JSON API            |
+| Vitol        | SmartRecruiters                   | JSON API            |
 
 Adding a company on a supported platform is just a config entry. Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`
