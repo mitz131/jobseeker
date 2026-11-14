@@ -222,3 +222,15 @@ label = "Ville de Lausanne"
 type = "lausanne"                # the city (the canton is etatdevaud); lausanne.ch's own job search
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "trafigura"
+label = "Trafigura"
+type = "workday"
+base_url = "https://trafigura.wd3.myworkdayjobs.com"
+tenant = "trafigura"
+site = "TrafiguraCareerSite"
+search = ""
+facet_filters = { Country = ["Switzerland"] }   # Switzerland only (locationCountry facet; the location main-group facet is empty here)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
