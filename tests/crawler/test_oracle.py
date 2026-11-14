@@ -26,6 +26,19 @@ class OracleTests(unittest.TestCase):
         self.assertEqual(len(refs), 38)
         self.assertEqual(refs[0].url, "https://jobs.example.ch/#fr/sites/CX_1/job/0")
 
+    def test_location_id_is_sent_only_when_set(self):
+        urls = []
+
+        class Spy(FakeOracleClient):
+            def get_json(self, url):
+                urls.append(url)
+                return super().get_json(url)
+
+        list(OracleSource(Spy(1), "https://x.oraclecloud.com", "CX_1", location_id=12345).list_jobs())
+        list(OracleSource(Spy(1), "https://x.oraclecloud.com", "CX_1").list_jobs())
+        self.assertIn("locationId=12345", urls[0])
+        self.assertNotIn("locationId", urls[1])
+
     def test_multiple_sites_are_merged_by_id(self):
         client = FakeOracleClient(30)
         src = OracleSource(client, "https://x.oraclecloud.com", ["CX_1", "enseignement"])

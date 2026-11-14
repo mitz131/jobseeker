@@ -40,7 +40,8 @@ class OracleSource:
     more than one of them is listed once (requisition IDs are shared across sites)."""
 
     def __init__(self, client, host: str, sites: list[str] | str, lang: str = "fr",
-                 public_url: str | None = None, search: str = "", **_):
+                 public_url: str | None = None, search: str = "",
+                 location_id: int | str | None = None, **_):
         self.client = client
         self.api = f"{host.rstrip('/')}/hcmRestApi/resources/latest"
         self.sites = [sites] if isinstance(sites, str) else list(sites)
@@ -48,9 +49,13 @@ class OracleSource:
         self.public_url = (public_url or
                            f"{host.rstrip('/')}/hcmUI/CandidateExperience/{lang}/sites/{{site}}").rstrip("/")
         self.search = search
+        # Server-side location filter (a country or city id from the site's location facets)
+        self.location_id = location_id
 
     def _search_page(self, site: str, offset: int) -> dict:
         finder = f"findReqs;siteNumber={site},limit={PAGE_SIZE},offset={offset},sortBy=POSTING_DATES_DESC"
+        if self.location_id:
+            finder += f",locationId={self.location_id}"
         if self.search:
             finder += f',keyword="{self.search}"'
         query = urllib.parse.urlencode({"onlyData": "true", "finder": finder,
