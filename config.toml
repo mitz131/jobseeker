@@ -37,6 +37,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "philipmorris"
 label = "Philip Morris"
+default_place = "Lausanne"   # head office (also a large site in Neuchâtel); only for jobs whose location can't be placed
 type = "phenom"
 base_url = "https://join.pmicareers.com"
 search = ""
@@ -47,6 +48,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "nestle"
 label = "Nestlé"
+default_place = "Vevey"   # head office (many Swiss sites); only for jobs whose location can't be placed
 type = "successfactors"
 base_url = "https://jobdetails.nestle.com"
 search = ""
@@ -57,6 +59,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "logitech"
 label = "Logitech"
+default_place = "Lausanne"   # Swiss head office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://logitech.wd5.myworkdayjobs.com"
 tenant = "logitech"
@@ -125,6 +128,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "swisscom"
 label = "Swisscom"
+default_place = "Worblaufen"   # head office, Ittigen near Bern; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://swisscom.wd103.myworkdayjobs.com"
 tenant = "swisscom"
@@ -136,6 +140,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "creditagricole"
 label = "Crédit Agricole"
+default_place = "Genève"   # Swiss head office; only for jobs whose location can't be placed
 type = "creditagricole"          # group portal: Indosuez, CACEIS, CA-CIB... in one list
 base_url = "https://groupecreditagricole.jobs"
 location_id = 176                # the portal's code for Switzerland (Suisse)
@@ -145,6 +150,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "pictet"
 label = "Pictet"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "sfcareer"                # classic SuccessFactors portal, linked from pictet.com/careers
 host = "https://career012.successfactors.eu"
 company = "banquepict"
@@ -155,6 +161,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "lombardodier"
 label = "Lombard Odier"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://lombardodier.wd3.myworkdayjobs.com"
 tenant = "lombardodier"
@@ -183,6 +190,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "mirabaud"
 label = "Mirabaud"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "smartrecruiters"         # SmartRecruiters' public API; mirabaud.com shows the same jobs
 company = "MirabaudCieSA"
 country = "ch"                   # the API's own country filter (ISO code)
@@ -205,6 +213,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "ubp"
 label = "UBP"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "oracle"                  # Union Bancaire Privée: Oracle Recruiting Cloud, linked from ubp.com
 host = "https://iaadtu.fa.ocs.oraclecloud.eu"
 sites = ["CX_1"]
@@ -230,6 +239,7 @@ location_include = ["Switzerland"]   # also hires in France, Luxembourg, Belgium
 [[company]]
 name = "lausanne"
 label = "Ville de Lausanne"
+default_place = "Lausanne"   # the city itself; only for jobs whose location can't be placed
 type = "lausanne"                # the city (the canton is etatdevaud); lausanne.ch's own job search
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
