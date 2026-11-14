@@ -1,3 +1,4 @@
+from .bcge import BCGESource
 from .creditagricole import CreditAgricoleSource
 from .jobcloud import JobCloudSource
 from .johdi import JohdiSource
@@ -22,6 +23,7 @@ SOURCE_TYPES = {
     "johdi": JohdiSource,
     "smartrecruiters": SmartRecruitersSource,
     "lausanne": LausanneSource,
+    "bcge": BCGESource,
 }
 
 
