@@ -194,6 +194,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "swissquote"
 label = "Swissquote"
+default_place = "Gland"   # head office; only for jobs whose location can't be placed
 type = "smartrecruiters"         # SmartRecruiters' public API; jobs.smartrecruiters.com is Swissquote's own careers site
 company = "Swissquote"
 country = "ch"                   # the API's own country filter (ISO code): Swiss postings only (Gland, Dübendorf, Zürich)
