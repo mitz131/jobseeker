@@ -104,6 +104,7 @@ frontend/
 | Trafigura    | Workday                           | JSON API            |
 | Vitol        | SmartRecruiters                   | JSON API            |
 | Gunvor       | Workday                           | JSON API            |
+| Temenos      | Workday                           | JSON API            |
 
 Adding a company on a supported platform is just a config entry. Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`

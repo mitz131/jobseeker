@@ -285,3 +285,16 @@ search = ""
 facets = { locations = ["5e0cfe9d17bf0191bb0153adb83bc826"] }   # Geneva
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "temenos"
+label = "Temenos"
+default_place = "Grand-Lancy"   # Geneva-area head office (register locality; Lancy alone is not in it); only for jobs whose location can't be placed
+type = "workday"
+base_url = "https://temenos.wd103.myworkdayjobs.com"
+tenant = "temenos"
+site = "Temenoscareers"
+search = ""                      # no Country facet on this site (only worldwide locations): filtered client-side below
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+location_include = ["Switzerland", "Genève", "Geneva", "Lancy", "Zurich", "Zürich", "Lausanne"]   # Swiss sites only
