@@ -298,3 +298,11 @@ search = ""                      # no Country facet on this site (only worldwide
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
 location_include = ["Switzerland", "Genève", "Geneva", "Lancy", "Zurich", "Zürich", "Lausanne"]   # Swiss sites only
+
+[[company]]
+name = "bcge"
+label = "BCGE"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
+type = "bcge"                    # Banque Cantonale de Genève: jobs.bcge.ch's own JSON API (Swiss jobs only, no country filter needed)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
