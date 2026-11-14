@@ -60,6 +60,10 @@ class Config:
         """Display name per company: its `label`, else its config name."""
         return {c["name"]: c.get("label", c["name"]) for c in self.data.get("company", [])}
 
+    def company_default_places(self) -> dict[str, str]:
+        """Per company, the place assumed for jobs whose location can't be placed."""
+        return {c["name"]: c["default_place"] for c in self.data.get("company", []) if c.get("default_place")}
+
     @cached_property
     def places(self) -> Places | None:
         """None when the locality register hasn't been downloaded."""

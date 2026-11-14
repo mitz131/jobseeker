@@ -101,8 +101,9 @@ def cmd_near(args, config, store, client):
     except ValueError as e:
         sys.exit(str(e))
     found, unknown = [], []
+    defaults = config.company_default_places()
     for row in store.jobs_since(args.since, args.company):
-        match = distance_to_job(places, home, row["location"])
+        match = distance_to_job(places, home, row["location"], defaults.get(row["company"]))
         if match is None:
             unknown.append(row)
         elif args.max_km is None or match.km <= args.max_km:

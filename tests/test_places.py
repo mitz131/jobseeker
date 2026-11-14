@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from jobseeker.places import Places, nearest, norm
+from jobseeker.places import Places, distance_to_job, nearest, norm
 
 HEADER = "Ortschaftsname;PLZ4;Zusatzziffer;ZIP_ID;Gemeindename;BFS-Nr;Kantonskürzel;Adressenanteil;E;N;Sprache;Validity"
 ROWS = [
@@ -107,6 +107,16 @@ class PlacesTests(unittest.TestCase):
         self.assertEqual(place.name, "Vevey")
         # Lausanne = mean of its 2 rows (2538000, 1153000); Vevey (2554000, 1146000): sqrt(16² + 7²)
         self.assertAlmostEqual(km, 17.46, places=2)
+
+    def test_default_place_only_when_nothing_else_places_the_job(self):
+        vevey = self.p.resolve_home("1800")
+        assumed = distance_to_job(self.p, vevey, "Suisse", default="Lausanne")
+        self.assertTrue(assumed.assumed)
+        self.assertEqual(assumed.label, "Lausanne (assumed)")
+        own = distance_to_job(self.p, vevey, "Montreux", default="Lausanne")
+        self.assertEqual((own.place.name, own.assumed), ("Montreux", False))
+        self.assertIsNone(distance_to_job(self.p, vevey, "Suisse"))
+        self.assertIsNone(distance_to_job(self.p, vevey, "Suisse", default="Nowhere"))
 
     def test_home_lookup(self):
         self.assertEqual(self.p.resolve_home("1020").name, "Renens VD")

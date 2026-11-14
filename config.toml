@@ -69,6 +69,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "vaudoise"
 label = "Vaudoise"
+default_place = "Lausanne"   # head office; only for jobs whose location can't be placed
 type = "vaudoise"                # Switzerland-only employer: no country filter needed
 listing_url = "https://www.vaudoise.ch/fr/carrieres/postes-disponibles"
 [company.filter]
@@ -77,6 +78,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "etatdevaud"
 label = "État de Vaud"
+default_place = "Lausanne"   # cantonal capital; only for jobs whose location can't be placed
 type = "oracle"                  # Swiss public employer: no country filter needed
 host = "https://fa-ewrg-saasfaeuraprod1.fa.ocs.oraclecloud.com"
 sites = ["CX_1", "enseignement"]  # general + teaching; jobs on both are stored once
@@ -88,6 +90,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "bcv"
 label = "BCV"
+default_place = "Lausanne"   # head office; only for jobs whose location can't be placed
 type = "successfactors"          # newer career site: results come from a JSON endpoint
 base_url = "https://jobs.bcv.ch"
 listing = "api"
@@ -203,6 +206,7 @@ location_include = ["Switzerland"]   # also hires in Luxembourg and Jersey
 [[company]]
 name = "edmondderothschild"
 label = "Edmond de Rothschild"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "oracle"                  # Oracle Recruiting Cloud, linked from edmond-de-rothschild.com (that site blocks bots)
 host = "https://evht.fa.ocs.oraclecloud.eu"
 sites = ["CX_7001"]

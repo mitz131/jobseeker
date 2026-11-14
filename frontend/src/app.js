@@ -209,9 +209,11 @@ function renderJobs(data) {
     const distance = el("td", { className: "col-distance" });
     if (data.home) {
       if (job.distance_km === null || job.distance_km === undefined) {
-        distance.append(el("span", { className: "via", textContent: "location unknown" }));
+        distance.append(el("span", { className: "via", textContent: "distance unknown" }));
       } else {
-        distance.append(formatKm(job.distance_km), el("span", { className: "via", textContent: job.nearest || "" }));
+        // A distance to the employer's default place is a guess: "≈" and "(assumed)"
+        distance.append((job.distance_assumed ? "≈ " : "") + formatKm(job.distance_km),
+          el("span", { className: "via", textContent: job.nearest || "" }));
       }
     }
     const row = el("tr", { className: job.open ? "job" : "job closed" },

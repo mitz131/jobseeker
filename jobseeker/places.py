@@ -8,7 +8,9 @@ A location string resolves to a list of places:
   - a region (places.toml) -> its member towns
   - a canton code only     -> every locality in that canton
   - a list of canton names -> every locality in those cantons ("Berne, Argovie")
-  - country only / ignored -> nothing ("location unknown")
+  - country only / ignored -> nothing
+A job with no point gets its employer's `default_place` (config.toml), marked as
+assumed; without one it is "distance unknown", and still listed.
 The distance to a job is the distance to its nearest place, so a region or
 canton is at distance 0 when the starting point is one of its localities.
 """
@@ -263,14 +265,19 @@ class Match:
     km: float
     place: Place
     via: str  # e.g. "cantons BE, AG" when the place stands for a wider area, else ""
+    assumed: bool = False  # the employer's default place, not the job's own location
 
     @property
     def label(self) -> str:
+        if self.assumed:
+            return f"{self.place.name} (assumed)"
         return f"{self.place.name}, via {self.via}" if self.via else self.place.name
 
 
-def distance_to_job(places: "Places", home: Place, location: str | None) -> Match | None:
-    """Nearest of the job's locations, or None when none of them has a point."""
+def distance_to_job(places: "Places", home: Place, location: str | None,
+                    default: str | None = None) -> Match | None:
+    """Nearest of the job's locations. When none of them has a point, the employer's
+    `default_place` (a register locality name), marked as assumed; else None."""
     # Remember which location string each place came from, so a canton- or
     # region-wide match is shown as such rather than as a specific town
     origin: dict[Place, str] = {}
@@ -279,4 +286,7 @@ def distance_to_job(places: "Places", home: Place, location: str | None) -> Matc
         for place in res.places:
             origin.setdefault(place, res.note if len(res.places) > 1 else "")
     hit = nearest(home, list(origin))
-    return Match(hit[0], hit[1], origin[hit[1]]) if hit else None
+    if hit:
+        return Match(hit[0], hit[1], origin[hit[1]])
+    place = places.locality(default)[0] if default else None
+    return Match(home.km_to(place), place, "", assumed=True) if place else None

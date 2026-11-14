@@ -5,8 +5,9 @@
 # Names on the right-hand side are locality names as written in the register.
 # Matching ignores case, accents and ü/ue (Zürich = Zurich = Zuerich).
 
-# Location strings that deliberately get no point (shown as "location unknown").
-# Country-only strings ("Suisse", "Non-défini") need no entry.
+# Location strings that deliberately get no point (the employer's default_place
+# if it has one, else "distance unknown"). Country-only strings ("Suisse",
+# "Non-défini") need no entry.
 ignore = [
     "Cork, Ireland",
     "London, United Kingdom",
@@ -23,6 +24,7 @@ ignore = [
 "Biel" = "Biel/Bienne"            # otherwise "Biel" matches the hamlet Biel VS (Goms)
 "Geneva" = "Genève"              # English name; otherwise read as the canton
 "Geneva (Genève)" = "Genève"     # Swisscom's Workday spelling
+"Jorat-Mezieres" = "Mézières VD"  # municipality since 2016 (Carrouge, Ferlens, Mézières), not a register locality
 "Wor-Ati6" = "Worblaufen"         # Swisscom building code: head office, Alte Tiefenaustrasse 6
 # A lone "Zurich", "Bern", "Luzern"... is read as the town. Strings listing
 # several canton names ("Berne, Argovie, Soleure") are read as those cantons.

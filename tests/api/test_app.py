@@ -99,9 +99,23 @@ def test_distance_sort_regions_at_zero_unknown_last(config):
     assert ids(client.get("/api/jobs", params={"home": "1800", "sort": "distance"}))[-2:] == ["/job/Zurich/Dev_JR1", "5"]
 
 
-def test_max_km_excludes_far_and_unknown(config):
+def test_max_km_excludes_far_keeps_unknown(config):
     client, _ = client_for(config)
-    assert sorted(ids(client.get("/api/jobs", params={"home": "Vevey", "max_km": 5}))) == ["1", "2"]
+    assert sorted(ids(client.get("/api/jobs", params={"home": "Vevey", "max_km": 5}))) == ["1", "2", "5"]
+
+
+def test_default_place_is_used_and_marked_as_assumed(config):
+    # "beta" assumes Lausanne for jobs it doesn't place ("Suisse"); located jobs keep theirs
+    config.path.write_text(CONFIG + '\n[[company]]\nname = "beta"\ntype = "workday"\ndefault_place = "Lausanne"\n')
+    client, _ = client_for(Config.load(config.path))
+    by_id = {i["job_id"]: i for i in client.get("/api/jobs", params={"home": "Vevey"}).json()["items"]}
+    assert by_id["5"]["nearest"] == "Lausanne (assumed)"
+    assert by_id["5"]["distance_assumed"] is True
+    assert by_id["5"]["distance_km"] > 15
+    assert by_id["/job/Zurich/Dev_JR1"]["nearest"] == "Zürich"
+    assert by_id["/job/Zurich/Dev_JR1"]["distance_assumed"] is False
+    # and the assumed distance counts for max_km
+    assert "5" not in ids(client.get("/api/jobs", params={"home": "Vevey", "max_km": 5}))
 
 
 def test_jobs_carry_the_company_display_name(config):

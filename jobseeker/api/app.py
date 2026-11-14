@@ -79,6 +79,7 @@ class JobSummary(BaseModel):
     open: bool  # seen in the company's latest successful run
     distance_km: float | None = None  # only when `home` is given and the location is known
     nearest: str | None = None  # the location the distance was measured to
+    distance_assumed: bool = False  # measured to the employer's default place, not the job's location
     labels: dict[str, Label] | None = None  # question -> answer; None: not labelled yet
 
 
@@ -270,6 +271,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         labels = current_labels(db.conn, current) if current else {}
         open_since = db.last_good_run_starts()
         wanted_location = norm(location) if location else None
+        default_places = config.company_default_places()
         items = []
         for row in db.all_jobs():
             item = summary(row, open_since)
@@ -285,10 +287,14 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
                     continue
                 item["labels"] = job_labels
             if home_place:
-                match = distance_to_job(config.places, home_place, row["location"])
+                match = distance_to_job(config.places, home_place, row["location"],
+                                        default_places.get(row["company"]))
                 if match:
-                    item |= {"distance_km": round(match.km, 1), "nearest": match.label}
-                if max_km is not None and (match is None or match.km > max_km):
+                    item |= {"distance_km": round(match.km, 1), "nearest": match.label,
+                             "distance_assumed": match.assumed}
+                # A job with no known location is kept (shown as "distance unknown"):
+                # it may well be near, and hiding it would hide it for good
+                if max_km is not None and match is not None and match.km > max_km:
                     continue
             items.append(item)
 

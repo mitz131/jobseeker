@@ -147,8 +147,15 @@ hand-edited `places.toml`:
   language or English ("Berne, Argovie, Soleure"), or a lone canton name that
   is not also a town ("Graubünden") stands for all localities of those cantons.
   A lone name that is also a town ("Zurich") is the town.
-- **Country-only** strings ("Suisse") and the `ignore` list have no point and
-  are shown as "location unknown".
+- **Country-only** strings ("Suisse") and the `ignore` list have no point.
+- **Default place:** a company can set `default_place` in `config.toml`, usually
+  its head office (BCV, Vaudoise and État de Vaud: Lausanne; Edmond de
+  Rothschild: Genève). Jobs whose location has no point are measured to it, and
+  the page marks the distance as a guess: "≈ 52.3 km, Genève (assumed)". The
+  stored location stays what the employer wrote.
+- Jobs still without a point are shown as "distance unknown". A distance
+  filter keeps them, at the end when sorting by distance: an ad that doesn't
+  say where may well be near.
 
 A job's distance is the straight-line distance to its nearest location, so a
 region or canton is at 0 km when the starting point is one of its localities;
