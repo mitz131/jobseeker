@@ -270,3 +270,18 @@ company = "vitol"
 country = "ch"                   # the API's own country filter (ISO code): Swiss postings only
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "gunvor"
+label = "Gunvor"
+default_place = "Genève"   # Geneva head office; only for jobs whose location can't be placed
+type = "workday"
+base_url = "https://gunvor.wd3.myworkdayjobs.com"
+tenant = "gunvor"
+site = "Gunvor_Careers"
+search = ""
+# No Country facet on this site, only cities: the Swiss one by raw ID (Geneva is the only
+# Swiss city in the list). A new Swiss city needs adding: `jobseeker facets gunvor`
+facets = { locations = ["5e0cfe9d17bf0191bb0153adb83bc826"] }   # Geneva
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
