@@ -97,6 +97,7 @@ frontend/
 | Lombard Odier | Workday                          | JSON API            |
 | Piguet Galland | Johdi Suite                     | JSON API            |
 | Mirabaud     | SmartRecruiters                   | JSON API            |
+| Swissquote   | SmartRecruiters                   | JSON API            |
 | UBP          | Oracle Recruiting Cloud           | JSON API            |
 | Edmond de Rothschild | Oracle Recruiting Cloud     | JSON API            |
 | Ville de Lausanne | lausanne.ch job search (Elasticsearch) | JSON API |
