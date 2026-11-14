@@ -259,3 +259,14 @@ search = ""
 facet_filters = { Country = ["Switzerland"] }   # Switzerland only (locationCountry facet; the location main-group facet is empty here)
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+
+[[company]]
+name = "vitol"
+label = "Vitol"
+default_place = "Genève"   # Swiss head office (Geneva); only for jobs whose location can't be placed
+type = "smartrecruiters"         # SmartRecruiters' public API; vitol.com/open-roles links to careers.smartrecruiters.com/vitol
+company = "vitol"
+country = "ch"                   # the API's own country filter (ISO code): Swiss postings only
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
