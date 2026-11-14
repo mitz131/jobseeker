@@ -192,6 +192,16 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 
 
 [[company]]
+name = "swissquote"
+label = "Swissquote"
+type = "smartrecruiters"         # SmartRecruiters' public API; jobs.smartrecruiters.com is Swissquote's own careers site
+company = "Swissquote"
+country = "ch"                   # the API's own country filter (ISO code): Swiss postings only (Gland, Dübendorf, Zürich)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+
+[[company]]
 name = "ubp"
 label = "UBP"
 type = "oracle"                  # Union Bancaire Privée: Oracle Recruiting Cloud, linked from ubp.com
