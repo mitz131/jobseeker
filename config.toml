@@ -240,6 +240,19 @@ location_include = ["Switzerland"]   # also hires in France, Luxembourg, Belgium
 
 
 [[company]]
+name = "jpmorgan"
+label = "J.P. Morgan"
+default_place = "Genève"   # J.P. Morgan (Suisse) SA head office; only for jobs whose location can't be placed
+type = "oracle"                  # JPMorgan Chase: Oracle Recruiting Cloud (~7,000 jobs worldwide)
+host = "https://jpmc.fa.oraclecloud.com"
+sites = ["CX_1001"]
+lang = "en"
+location_id = 300000000289177    # Switzerland (server-side filter; never list the worldwide catalogue)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+
+[[company]]
 name = "lausanne"
 label = "Ville de Lausanne"
 default_place = "Lausanne"   # the city itself; only for jobs whose location can't be placed

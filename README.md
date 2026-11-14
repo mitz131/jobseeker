@@ -100,6 +100,7 @@ frontend/
 | Swissquote   | SmartRecruiters                   | JSON API            |
 | UBP          | Oracle Recruiting Cloud           | JSON API            |
 | Edmond de Rothschild | Oracle Recruiting Cloud     | JSON API            |
+| J.P. Morgan  | Oracle Recruiting Cloud           | JSON API            |
 | Ville de Lausanne | lausanne.ch job search (Elasticsearch) | JSON API |
 | Trafigura    | Workday                           | JSON API            |
 | Vitol        | SmartRecruiters                   | JSON API            |
