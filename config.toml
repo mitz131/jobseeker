@@ -226,6 +226,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "trafigura"
 label = "Trafigura"
+default_place = "Genève"   # Swiss office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://trafigura.wd3.myworkdayjobs.com"
 tenant = "trafigura"
