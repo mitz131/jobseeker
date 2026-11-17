@@ -112,9 +112,14 @@ function groupBox(group) {
   fold.dataset.key = `fold:${key}`;
   fold.setAttribute("aria-label", group.label);
   fold.setAttribute("aria-expanded", String(open));
+  // folds in place (no rebuild of the list)
   fold.addEventListener("click", () => {
-    if (collapsed.has(key)) collapsed.delete(key); else collapsed.add(key);
-    showCompanyFilter();
+    const nowOpen = collapsed.has(key);
+    if (nowOpen) collapsed.delete(key); else collapsed.add(key);
+    members.hidden = !nowOpen;
+    fold.textContent = nowOpen ? "▾" : "▸";
+    fold.title = nowOpen ? "Fold" : "Unfold";
+    fold.setAttribute("aria-expanded", String(nowOpen));
   });
   const count = el("span", { className: "muted", textContent: ` ${group.companies.length}` });
   const header = el("div", { className: "group-header" }, fold,
@@ -148,7 +153,8 @@ function clearCompanies() {
 /** Close the dropdown on a click outside it, or on Esc. */
 function closeDropdownOutside(dropdown) {
   document.addEventListener("click", (e) => {
-    if (dropdown.open && !dropdown.contains(e.target)) dropdown.open = false;
+    // the path as it was when the click started: a handler may have replaced the clicked element by now
+    if (dropdown.open && !e.composedPath().includes(dropdown)) dropdown.open = false;
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && dropdown.open) {
