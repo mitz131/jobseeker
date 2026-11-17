@@ -323,6 +323,10 @@ function renderStatus(s) {
     $("runtime").title = s.running.detail;
     $("runtime").className = `runtime ${s.running.where}`;
     $("runtime").hidden = false;
+    // the real instance runs on Kubernetes; anything else is a test server
+    const test = s.running.where !== "kubernetes";
+    $("test-tag").hidden = !test;
+    document.title = test ? "TEST · Jobseeker" : "Jobseeker";
   }
   $("refresh").disabled = s.refresh_running;
 

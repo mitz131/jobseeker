@@ -49,6 +49,8 @@ h1 { margin: 0; font-size: 20px; }
 .status { color: var(--muted); display: flex; gap: 12px; align-items: baseline; }
 .runtime { padding: 0 7px; border: 1px solid var(--line); border-radius: 9px; font-size: 12px; }
 .runtime.kubernetes { border-color: var(--accent); color: var(--accent); }
+.test-tag { padding: 0 7px; border-radius: 9px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+            background: var(--error); color: var(--panel); }
 
 button {
   font: inherit;

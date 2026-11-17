@@ -218,6 +218,7 @@ jobseeker serve --host 0.0.0.0         # reachable from outside (e.g. from the s
   in it, including ones added later; sort by date or distance; click a row for the description. Filters are
   kept in the page URL. When the data is older than 24 h, opening the page starts
   the update in the background and the list reloads when it's done.
+  Outside Kubernetes (a local or test server) the header shows a red TEST tag.
 - **`/docs`** (Swagger UI) and `/redoc` – interactive API documentation.
 
 From the sandbox host, publish the port first:
