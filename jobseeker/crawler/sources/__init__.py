@@ -6,6 +6,7 @@ from .johdi import JohdiSource
 from .lausanne import LausanneSource
 from .oracle import OracleSource
 from .phenom import PhenomSource
+from .radancy import RadancySource
 from .sfcareer import SFCareerSource
 from .smartrecruiters import SmartRecruitersSource
 from .successfactors import SuccessFactorsSource
@@ -28,6 +29,7 @@ SOURCE_TYPES = {
     "bcge": BCGESource,
     "assura": AssuraSource,
     "umantis": UmantisSource,
+    "radancy": RadancySource,
 }
 
 
