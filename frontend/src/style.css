@@ -122,7 +122,8 @@ input:disabled, select:disabled { opacity: 0.5; }
   background: var(--panel);
   box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
 }
-.dropdown-actions { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 6px; }
+.dropdown-actions { display: flex; justify-content: flex-end; gap: 12px; font-size: 12px; margin-bottom: 6px; }
+.dropdown-actions[hidden] { display: none; }
 .dropdown-list { display: flex; flex-direction: column; gap: 3px; max-height: min(60vh, 420px); overflow-y: auto; }
 .filters .dropdown-list label { color: var(--fg); white-space: nowrap; }
 .group + .group { margin-top: 4px; }

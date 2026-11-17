@@ -143,7 +143,7 @@ function setCompanies({ companies, categories }) {
 
 function showCompanySummary() {
   $("companies-summary").textContent = employersSummary(state, groups);
-  $("companies-clear").hidden = !state.companies.length && !state.categories.length;
+  $("companies-actions").hidden = !state.companies.length && !state.categories.length;
 }
 
 function clearCompanies() {
