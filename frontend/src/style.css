@@ -130,7 +130,7 @@ input:disabled, select:disabled { opacity: 0.5; }
 .group-header label { font-weight: 600; }
 .group-header .muted { font-weight: normal; font-size: 12px; }
 button.link.fold { width: 1.4em; padding: 0; text-decoration: none; color: var(--muted); }
-.group-members { display: flex; flex-direction: column; gap: 3px; padding: 3px 0 0 1.6em; }
+.group-members { display: flex; flex-direction: column; gap: 3px; padding: 3px 0 0 3em; }
 .group-members[hidden] { display: none; }
 
 .quick { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; flex-basis: 100%; }
