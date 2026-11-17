@@ -1,3 +1,4 @@
+from .assura import AssuraSource
 from .bcge import BCGESource
 from .creditagricole import CreditAgricoleSource
 from .jobcloud import JobCloudSource
@@ -24,6 +25,7 @@ SOURCE_TYPES = {
     "smartrecruiters": SmartRecruitersSource,
     "lausanne": LausanneSource,
     "bcge": BCGESource,
+    "assura": AssuraSource,
 }
 
 

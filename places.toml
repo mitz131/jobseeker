@@ -28,6 +28,9 @@ ignore = [
 "Jorat-Mezieres" = "Mézières VD"  # municipality since 2016 (Carrouge, Ferlens, Mézières), not a register locality
 "Wor-Ati6" = "Worblaufen"         # Swisscom building code: head office, Alte Tiefenaustrasse 6
 "Zürich Prime Tower" = "Zürich"    # Deutsche Bank Workday office names
+"Yverdon" = "Yverdon-les-Bains"    # Assura's branch
+"Risch-Rotkreuz" = "Rotkreuz"      # Assura: municipality Risch, locality Rotkreuz
+"Bern-Bümpliz" = "Bern"            # Assura: Bümpliz is a district of Bern
 "Zürich Uraniastrasse 9" = "Zürich"
 # A lone "Zurich", "Bern", "Luzern"... is read as the town. Strings listing
 # several canton names ("Berne, Argovie, Soleure") are read as those cantons.
