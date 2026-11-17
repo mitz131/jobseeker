@@ -1,6 +1,6 @@
 import unittest
 
-from jobseeker.crawler.runner import passes_filter, run_company
+from jobseeker.crawler.runner import interleave_by_platform, passes_filter, run_company
 from jobseeker.crawler.sources.base import JobRef
 from jobseeker.db import JobStore
 
@@ -51,3 +51,24 @@ class RunnerTests(unittest.TestCase):
                 raise RuntimeError("HTTP 503")
         r = run_company(self.store, Broken(), WORKDAY, max_new=10)
         self.assertIn("503", r.error)
+
+
+class InterleaveTests(unittest.TestCase):
+    def test_same_platform_is_spread_out(self):
+        companies = [{"name": n, "type": t} for n, t in [
+            ("a1", "workday"), ("a2", "workday"), ("a3", "workday"),
+            ("b1", "oracle"), ("c1", "phenom"), ("b2", "oracle")]]
+        order = [c["name"] for c in interleave_by_platform(companies)]
+        self.assertEqual(order, ["a1", "b1", "a2", "c1", "b2", "a3"])
+
+    def test_no_platform_back_to_back_when_avoidable(self):
+        # 8 of 29 on one platform, as in config.toml today
+        companies = [{"name": f"w{i}", "type": "workday"} for i in range(8)] + \
+                    [{"name": f"o{i}", "type": f"t{i % 9}"} for i in range(21)]
+        types = [c["type"] for c in interleave_by_platform(companies)]
+        self.assertFalse(any(a == b == "workday" for a, b in zip(types, types[1:])))
+
+    def test_keeps_every_company_once(self):
+        companies = [{"name": str(i), "type": "workday" if i % 3 else "other"} for i in range(10)]
+        self.assertCountEqual(interleave_by_platform(companies), companies)
+
