@@ -49,6 +49,8 @@ h1 { margin: 0; font-size: 20px; }
 .status { color: var(--muted); display: flex; gap: 12px; align-items: baseline; }
 .runtime { padding: 0 7px; border: 1px solid var(--line); border-radius: 9px; font-size: 12px; }
 .runtime.kubernetes { border-color: var(--accent); color: var(--accent); }
+.test-tag { padding: 0 7px; border-radius: 9px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+            background: var(--error); color: var(--panel); }
 
 button {
   font: inherit;
@@ -112,7 +114,7 @@ input:disabled, select:disabled { opacity: 0.5; }
   z-index: 10;
   top: calc(100% + 4px);
   left: 0;
-  min-width: 230px;
+  min-width: 260px;
   max-width: calc(100vw - 32px);
   padding: 8px 10px;
   border: 1px solid var(--line);
@@ -120,9 +122,17 @@ input:disabled, select:disabled { opacity: 0.5; }
   background: var(--panel);
   box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
 }
-.dropdown-actions { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 6px; }
+.dropdown-actions { display: flex; justify-content: flex-end; gap: 12px; font-size: 12px; margin-bottom: 6px; }
+.dropdown-actions[hidden] { display: none; }
 .dropdown-list { display: flex; flex-direction: column; gap: 3px; max-height: min(60vh, 420px); overflow-y: auto; }
-.filters .dropdown-list label { color: var(--fg); }
+.filters .dropdown-list label { color: var(--fg); white-space: nowrap; }
+.group + .group { margin-top: 4px; }
+.group-header { display: flex; align-items: center; gap: 2px; }
+.group-header label { font-weight: 600; }
+.group-header .muted { font-weight: normal; font-size: 12px; }
+button.link.fold { width: 1.4em; padding: 0; text-decoration: none; color: var(--muted); }
+.group-members { display: flex; flex-direction: column; gap: 3px; padding: 3px 0 0 3em; }
+.group-members[hidden] { display: none; }
 
 .quick { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; flex-basis: 100%; }
 .quick .legend { color: var(--muted); margin-right: 4px; }

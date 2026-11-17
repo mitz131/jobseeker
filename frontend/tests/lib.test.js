@@ -2,21 +2,21 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employersSummary, formatAge, formatDate, formatKm, jobPath,
-  jobsQuery, labelTags, quickFilterActive, runtimeText, shortLocation, sortEmployers, stateFromSearch, stateToSearch,
-  toggleLabel, toggleQuickFilter, webLink,
+  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employerGroups, employersSummary, formatAge, formatDate,
+  formatKm, groupState, jobPath, jobsQuery, labelTags, quickFilterActive, runtimeText, shortLocation, sortEmployers,
+  stateFromSearch, stateToSearch, toggleCompany, toggleGroup, toggleLabel, toggleQuickFilter, webLink,
 } from "../src/lib.js";
 
 test("state survives a round trip through the URL", () => {
   const state = { home: "1020", maxKm: "15", location: "Lausanne", sort: "distance",
-                  companies: ["bcv", "salt"], includeClosed: true,
+                  companies: ["bcv", "salt"], categories: ["trading"], includeClosed: true,
                   labels: ["seniority:junior", "german_required:no"] };
   assert.deepEqual(stateFromSearch(stateToSearch(state)), state);
 });
 
 test("default state gives an empty query", () => {
   assert.equal(stateToSearch(DEFAULT_STATE), "");
-  assert.deepEqual(stateFromSearch(""), { ...DEFAULT_STATE, companies: [], labels: [] });
+  assert.deepEqual(stateFromSearch(""), { ...DEFAULT_STATE, companies: [], categories: [], labels: [] });
 });
 
 test("distance options stay out of the URL without a starting point", () => {
@@ -131,12 +131,76 @@ test("employers sort by display name, ignoring accents", () => {
   assert.deepEqual(sorted.map((e) => e.company), ["bcv", "etatdevaud", "lombardodier", "salt"]);
 });
 
+const CATEGORIES = [{ category: "bank", label: "Banks" }, { category: "trading", label: "Trading houses" }];
+const COMPANIES = [
+  { company: "pictet", label: "Pictet", category: "bank" },
+  { company: "bcv", label: "BCV", category: "bank" },
+  { company: "vitol", label: "Vitol", category: "trading" },
+  { company: "gunvor", label: "Gunvor", category: "trading" },
+  { company: "salt", label: "Salt", category: null },
+  { company: "odd", label: "Odd", category: "typo" },
+];
+const GROUPS = employerGroups(COMPANIES, CATEGORIES);
+const none = { companies: [], categories: [] };
+
+test("employers grouped by category in config order, the rest under Other", () => {
+  assert.deepEqual(GROUPS.map((g) => [g.category, g.label, g.companies.map((c) => c.company)]), [
+    ["bank", "Banks", ["bcv", "pictet"]],
+    ["trading", "Trading houses", ["gunvor", "vitol"]],
+    [null, "Other", ["odd", "salt"]],
+  ]);
+  // a category only in the URL keeps an (empty) group, so it can be unticked
+  assert.deepEqual(employerGroups(COMPANIES, CATEGORIES, ["gone"]).map((g) => g.category),
+                   ["bank", "trading", "gone", null]);
+});
+
+test("ticking a group keeps it as a category, replacing its single employers", () => {
+  const state = toggleGroup({ companies: ["pictet", "salt"], categories: [] }, GROUPS[0], true);
+  assert.deepEqual(state, { companies: ["salt"], categories: ["bank"] });
+  assert.equal(groupState(state, GROUPS[0]), "all");
+  assert.deepEqual(toggleGroup(state, GROUPS[0], false), { companies: ["salt"], categories: [] });
+});
+
+test("Other is ticked employer by employer", () => {
+  const state = toggleGroup(none, GROUPS[2], true);
+  assert.deepEqual(state, { companies: ["odd", "salt"], categories: [] });
+  assert.equal(groupState(state, GROUPS[2]), "all");
+  assert.deepEqual(toggleGroup(state, GROUPS[2], false), none);
+});
+
+test("group checkbox state", () => {
+  assert.equal(groupState(none, GROUPS[0]), "none");
+  assert.equal(groupState({ companies: ["bcv"], categories: [] }, GROUPS[0]), "some");
+  assert.equal(groupState({ companies: ["salt"], categories: [] }, GROUPS[2]), "some");
+});
+
+test("unticking one employer of a ticked group keeps the others", () => {
+  const state = toggleCompany({ companies: ["salt"], categories: ["bank", "trading"] }, GROUPS, "vitol", false);
+  assert.deepEqual(state, { companies: ["salt", "gunvor"], categories: ["bank"] });
+});
+
+test("ticking the last employer of a group turns it into the group", () => {
+  let state = toggleCompany(none, GROUPS, "vitol", true);
+  assert.deepEqual(state, { companies: ["vitol"], categories: [] });
+  state = toggleCompany(state, GROUPS, "gunvor", true);
+  assert.deepEqual(state, { companies: [], categories: ["trading"] });
+  // but not for Other, which has no category
+  assert.deepEqual(toggleCompany({ companies: ["odd"], categories: [] }, GROUPS, "salt", true),
+                   { companies: ["odd", "salt"], categories: [] });
+  assert.deepEqual(toggleCompany(state, GROUPS, "salt", false), state); // not ticked: no change
+});
+
 test("employer dropdown summary", () => {
-  const labels = { pictet: "Pictet", mirabaud: "Mirabaud" };
-  assert.equal(employersSummary([], labels), "All");
-  assert.equal(employersSummary(["pictet", "mirabaud"], labels), "Pictet, Mirabaud");
-  assert.equal(employersSummary(["pictet", "gone"], labels), "Pictet, gone");   // unknown: its name
-  assert.equal(employersSummary(["a", "b", "c"], labels), "3 selected");
+  assert.equal(employersSummary(none, GROUPS), "All");
+  assert.equal(employersSummary({ companies: ["vitol"], categories: ["bank"] }, GROUPS), "Banks, Vitol");
+  assert.equal(employersSummary({ companies: ["pictet", "gone"], categories: [] }, GROUPS), "Pictet, gone"); // unknown: its name
+  assert.equal(employersSummary({ companies: ["salt", "odd"], categories: ["bank", "trading"] }, GROUPS),
+               "Banks, Trading houses +2 more");
+});
+
+test("categories go to the API query", () => {
+  assert.equal(jobsQuery({ ...DEFAULT_STATE, companies: ["salt"], categories: ["bank"] }, 10),
+               "limit=10&company=salt&category=bank");
 });
 
 test("only web addresses become links", () => {

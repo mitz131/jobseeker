@@ -19,10 +19,19 @@ db_path = "data/jobs.db"
 places_register = "register.csv"
 places_file = "places.toml"
 
+[[category]]
+name = "bank"
+label = "Banks"
+
+[[category]]
+name = "tech"
+label = "Tech & telecom"
+
 [[company]]
 name = "acme"
 type = "workday"
 label = "ACME Corp"
+category = "tech"
 '''
 PLACES = '''
 [regions]
@@ -132,6 +141,15 @@ def test_company_and_location_filters(config):
         sorted(["5", "2", "1", "/job/Zurich/Dev_JR1"])
 
 
+def test_category_filter(config):
+    client, _ = client_for(config)
+    assert sorted(ids(client.get("/api/jobs", params={"category": "tech"}))) == ["1", "2"]
+    assert ids(client.get("/api/jobs", params={"category": "bank"})) == []  # nobody in it
+    # a category and a company: jobs of either (beta is in no category)
+    assert sorted(ids(client.get("/api/jobs", params={"category": "tech", "company": "beta"}))) == \
+        sorted(["1", "2", "5", "/job/Zurich/Dev_JR1"])
+
+
 def test_limit_and_offset_keep_total(config):
     client, _ = client_for(config)
     body = client.get("/api/jobs", params={"limit": 2, "offset": 1}).json()
@@ -166,6 +184,9 @@ def test_status(config):
     assert [c["company"] for c in body["companies"]] == ["acme", "beta"]
     # display names: the config `label`, else the name (beta is not in the config)
     assert [c["label"] for c in body["companies"]] == ["ACME Corp", "beta"]
+    assert [c["category"] for c in body["companies"]] == ["tech", None]
+    assert body["categories"] == [{"category": "bank", "label": "Banks"},
+                                  {"category": "tech", "label": "Tech & telecom"}]
     assert body["refresh_running"] is False
 
 

@@ -60,6 +60,15 @@ class Config:
         """Display name per company: its `label`, else its config name."""
         return {c["name"]: c.get("label", c["name"]) for c in self.data.get("company", [])}
 
+    def categories(self) -> list[dict]:
+        """Employer groups for the page, in display order: [{name, label}]."""
+        return [{"name": c["name"], "label": c.get("label", c["name"])} for c in self.data.get("category", [])]
+
+    def company_categories(self) -> dict[str, str]:
+        """Category per company, for those that have one defined under [[category]]."""
+        known = {c["name"] for c in self.data.get("category", [])}
+        return {c["name"]: c["category"] for c in self.data.get("company", []) if c.get("category") in known}
+
     def company_default_places(self) -> dict[str, str]:
         """Per company, the place assumed for jobs whose location can't be placed."""
         return {c["name"]: c["default_place"] for c in self.data.get("company", []) if c.get("default_place")}

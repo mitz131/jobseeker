@@ -2,9 +2,9 @@
 // is always inserted with textContent, never as HTML.
 
 import {
-  availableQuickFilters, debounce, employersSummary, formatAge, formatDate, formatKm, jobPath, jobsQuery, labelTags,
-  optionName, questionName, quickFilterActive, runtimeText, shortLocation, sortEmployers, stateFromSearch,
-  stateToSearch, toggleLabel, toggleQuickFilter, webLink,
+  availableQuickFilters, debounce, employerGroups, employersSummary, formatAge, formatDate, formatKm, groupState,
+  jobPath, jobsQuery, labelTags, optionName, questionName, quickFilterActive, runtimeText, shortLocation,
+  stateFromSearch, stateToSearch, toggleCompany, toggleGroup, toggleLabel, toggleQuickFilter, webLink,
 } from "./lib.js";
 
 const POLL_MS = 5000;
@@ -15,7 +15,9 @@ let lastStatus = null;
 let jobsRequest = 0; // number of the latest /api/jobs request; older answers are dropped
 let pollTimer = null;
 let labelQuestions = []; // from /api/labels; empty when labels are not configured
-let companyLabels = {};   // company -> display name, from /api/status
+let employerList = { companies: [], categories: [] }; // from /api/status
+let groups = [];          // the employer dropdown's groups, see employerGroups()
+const collapsed = new Set(); // groups folded in the dropdown (all start open)
 
 async function api(path, options = {}) {
   // the server only accepts POSTs with this header: other websites can't send it
@@ -50,7 +52,8 @@ function readControls() {
     maxKm: $("max-km").value,
     location: $("location").value,
     sort: $("sort").value,
-    companies: [...document.querySelectorAll("#companies input:checked")].map((i) => i.value),
+    companies: state.companies, // kept in sync by the employer dropdown itself
+    categories: state.categories,
     includeClosed: $("include-closed").checked,
     labels: state.labels, // kept in sync by the label controls themselves
   };
@@ -67,40 +70,91 @@ function updateDistanceControls() {
 function onFiltersChanged() {
   updateDistanceControls();
   readControls();
-  showCompanySummary();
   window.history.replaceState(null, "", window.location.pathname + stateToSearch(state));
   loadJobs();
 }
 
-/** The employer dropdown: one checkbox per employer, sorted by display name. Companies
- *  only in the URL (no longer crawled) keep a box, so the filter can be undone. */
-function buildCompanyFilter(companies) {
-  companyLabels = Object.fromEntries(companies.map((c) => [c.company, c.label]));
-  const known = new Set(companies.map((c) => c.company));
-  const extra = state.companies.filter((c) => !known.has(c)).map((c) => ({ company: c, label: c }));
-  const boxes = sortEmployers([...companies, ...extra]).map(({ company, label }) => {
-    const input = el("input", { type: "checkbox", value: company, checked: state.companies.includes(company) });
-    input.addEventListener("change", onFiltersChanged);
-    return el("label", { className: "check" }, input, ` ${label}`);
-  });
-  $("companies-list").replaceChildren(...boxes);
+/** The employer dropdown: a group per category, each with a checkbox for the whole group
+ *  (partly ticked when only some of its employers are) and a fold button, then one
+ *  checkbox per employer. Companies only in the URL (no longer crawled) keep a box
+ *  under "Other", so the filter can be undone. */
+function buildCompanyFilter(status) {
+  employerList = {
+    companies: status.companies.map(({ company, label, category }) => ({ company, label, category })),
+    categories: status.categories ?? [],
+  };
+  showCompanyFilter();
+}
+
+function showCompanyFilter() {
+  const known = new Set(employerList.companies.map((c) => c.company));
+  const extra = state.companies.filter((c) => !known.has(c)).map((c) => ({ company: c, label: c, category: null }));
+  groups = employerGroups([...employerList.companies, ...extra], employerList.categories, state.categories);
+  // rebuilt on every change: keep the keyboard focus and the scroll position
+  const list = $("companies-list");
+  const focused = list.contains(document.activeElement) ? document.activeElement.dataset.key : null;
+  const scroll = list.scrollTop;
+  list.replaceChildren(...groups.map(groupBox));
+  list.scrollTop = scroll;
+  if (focused) list.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus();
   showCompanySummary();
 }
 
+function groupBox(group) {
+  const key = group.category ?? "";
+  const tick = groupState(state, group);
+  const all = el("input", { type: "checkbox", checked: tick === "all", indeterminate: tick === "some" });
+  all.dataset.key = `group:${key}`;
+  all.addEventListener("change", () => setCompanies(toggleGroup(state, group, all.checked)));
+  const open = !collapsed.has(key);
+  const fold = el("button", { type: "button", className: "link fold", textContent: open ? "▾" : "▸",
+                              title: open ? "Fold" : "Unfold" });
+  fold.dataset.key = `fold:${key}`;
+  fold.setAttribute("aria-label", group.label);
+  fold.setAttribute("aria-expanded", String(open));
+  // folds in place (no rebuild of the list)
+  fold.addEventListener("click", () => {
+    const nowOpen = collapsed.has(key);
+    if (nowOpen) collapsed.delete(key); else collapsed.add(key);
+    members.hidden = !nowOpen;
+    fold.textContent = nowOpen ? "▾" : "▸";
+    fold.title = nowOpen ? "Fold" : "Unfold";
+    fold.setAttribute("aria-expanded", String(nowOpen));
+  });
+  const count = el("span", { className: "muted", textContent: ` ${group.companies.length}` });
+  const header = el("div", { className: "group-header" }, fold,
+    el("label", { className: "check" }, all, ` ${group.label}`, count));
+  const boxes = group.companies.map(({ company, label }) => {
+    const ticked = state.companies.includes(company) || (group.category !== null && state.categories.includes(group.category));
+    const input = el("input", { type: "checkbox", value: company, checked: ticked });
+    input.dataset.key = `company:${company}`;
+    input.addEventListener("change", () => setCompanies(toggleCompany(state, groups, company, input.checked)));
+    return el("label", { className: "check" }, input, ` ${label}`);
+  });
+  const members = el("div", { className: "group-members", hidden: !open }, ...boxes);
+  return el("div", { className: "group" }, header, members);
+}
+
+function setCompanies({ companies, categories }) {
+  state = { ...state, companies, categories };
+  showCompanyFilter();
+  onFiltersChanged();
+}
+
 function showCompanySummary() {
-  $("companies-summary").textContent = employersSummary(state.companies, companyLabels);
-  $("companies-clear").hidden = !state.companies.length;
+  $("companies-summary").textContent = employersSummary(state, groups);
+  $("companies-actions").hidden = !state.companies.length && !state.categories.length;
 }
 
 function clearCompanies() {
-  $("companies-list").querySelectorAll("input:checked").forEach((i) => { i.checked = false; });
-  onFiltersChanged();
+  setCompanies({ companies: [], categories: [] });
 }
 
 /** Close the dropdown on a click outside it, or on Esc. */
 function closeDropdownOutside(dropdown) {
   document.addEventListener("click", (e) => {
-    if (dropdown.open && !dropdown.contains(e.target)) dropdown.open = false;
+    // the path as it was when the click started: a handler may have replaced the clicked element by now
+    if (dropdown.open && !e.composedPath().includes(dropdown)) dropdown.open = false;
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && dropdown.open) {
@@ -269,6 +323,10 @@ function renderStatus(s) {
     $("runtime").title = s.running.detail;
     $("runtime").className = `runtime ${s.running.where}`;
     $("runtime").hidden = false;
+    // the real instance runs on Kubernetes; anything else is a test server
+    const test = s.running.where !== "kubernetes";
+    $("test-tag").hidden = !test;
+    document.title = test ? "TEST · Jobseeker" : "Jobseeker";
   }
   $("refresh").disabled = s.refresh_running;
 
@@ -371,7 +429,7 @@ async function start() {
   loadJobs();
   try {
     const s = await loadStatus();
-    buildCompanyFilter(s.companies);
+    buildCompanyFilter(s);
     if (s.refresh_running) pollUntilDone();
     else if (s.stale) await refresh(false); // older than 24 h: update (and label) in the background
     else if (s.unlabelled) await labelNow(); // up to date, but some jobs have no labels yet

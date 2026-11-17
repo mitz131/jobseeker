@@ -5,7 +5,8 @@ export const DEFAULT_STATE = Object.freeze({
   maxKm: "",           // only jobs within this distance of home
   location: "",        // text in the job location
   sort: "date",        // "date" (newest first) or "distance" (nearest first)
-  companies: [],       // empty = all
+  companies: [],       // employers ticked one by one; with categories empty = all
+  categories: [],      // employer groups ticked as a whole: every employer in them, also ones added later
   includeClosed: false,
   labels: [],          // label filters "question:answer"; jobs not labelled yet always show
 });
@@ -20,6 +21,7 @@ export function stateFromSearch(search) {
     location: p.get("location") ?? "",
     sort,
     companies: p.getAll("company"),
+    categories: p.getAll("category"),
     includeClosed: p.get("include_closed") === "true",
     labels: p.getAll("label"),
   };
@@ -37,6 +39,7 @@ export function stateToSearch(state) {
   }
   if (state.location.trim()) p.set("location", state.location.trim());
   for (const c of state.companies) p.append("company", c);
+  for (const c of state.categories) p.append("category", c);
   if (state.includeClosed) p.set("include_closed", "true");
   for (const l of state.labels) p.append("label", l);
   const s = p.toString();
@@ -55,6 +58,7 @@ export function jobsQuery(state, limit = 1000) {
   }
   if (state.location.trim()) p.set("location", state.location.trim());
   for (const c of state.companies) p.append("company", c);
+  for (const c of state.categories) p.append("category", c);
   if (state.includeClosed) p.set("include_closed", "true");
   for (const l of state.labels) p.append("label", l);
   return p.toString();
@@ -220,11 +224,76 @@ export function sortEmployers(employers) {
   return [...employers].sort((a, b) => a.label.localeCompare(b.label, "fr", { sensitivity: "base" }));
 }
 
-/** The closed dropdown's text: nothing ticked means no filter. */
-export function employersSummary(selected, labels) {
-  if (!selected.length) return "All";
-  if (selected.length <= 2) return selected.map((c) => labels[c] ?? c).join(", ");
-  return `${selected.length} selected`;
+/** The dropdown's groups: [{category, label, companies: [{company, label}]}], in config
+ *  order, employers sorted by name. Employers without a known category go to "Other"
+ *  (category null) at the end; categories only in the URL get an empty group, so the
+ *  filter can still be undone. */
+export function employerGroups(companies, categories, selectedCategories = []) {
+  const known = new Set(categories.map((c) => c.category));
+  const groups = [
+    ...categories,
+    ...selectedCategories.filter((c) => !known.has(c)).map((c) => ({ category: c, label: c })),
+  ].map(({ category, label }) => ({
+    category, label, companies: sortEmployers(companies.filter((c) => c.category === category)),
+  }));
+  const other = sortEmployers(companies.filter((c) => !known.has(c.category)));
+  if (other.length) groups.push({ category: null, label: "Other", companies: other });
+  return groups;
+}
+
+/** "all", "some" or "none" of a group's employers selected. */
+export function groupState(state, group) {
+  if (group.category !== null && state.categories.includes(group.category)) return "all";
+  const ticked = group.companies.filter((c) => state.companies.includes(c.company)).length;
+  if (ticked === 0) return "none";
+  return ticked === group.companies.length && group.category === null ? "all" : "some";
+}
+
+/** {companies, categories} after ticking or unticking a whole group. A group with a
+ *  category is kept as that category; "Other" ticks its employers one by one. */
+export function toggleGroup(state, group, checked) {
+  const members = new Set(group.companies.map((c) => c.company));
+  const companies = state.companies.filter((c) => !members.has(c));
+  let categories = state.categories.filter((c) => c !== group.category);
+  if (checked) {
+    if (group.category === null) return { companies: [...companies, ...members], categories };
+    categories = [...categories, group.category];
+  }
+  return { companies, categories };
+}
+
+/** {companies, categories} after ticking or unticking one employer. Unticking one in a
+ *  ticked group keeps the rest of the group ticked; ticking the last one of a group
+ *  turns it into the whole group. */
+export function toggleCompany(state, groups, company, checked) {
+  const group = groups.find((g) => g.companies.some((c) => c.company === company));
+  let { companies, categories } = state;
+  if (checked) {
+    companies = companies.includes(company) ? companies : [...companies, company];
+    if (group && group.category !== null && group.companies.every((c) => companies.includes(c.company))) {
+      return toggleGroup({ companies, categories }, group, true);
+    }
+    return { companies, categories };
+  }
+  if (group && group.category !== null && categories.includes(group.category)) {
+    categories = categories.filter((c) => c !== group.category);
+    companies = [...companies, ...group.companies.map((c) => c.company).filter((c) => c !== company)];
+  }
+  return { companies: companies.filter((c) => c !== company), categories };
+}
+
+/** The closed dropdown's text: ticked groups by name, then single employers; nothing
+ *  ticked means no filter. */
+export function employersSummary(state, groups) {
+  const groupLabel = Object.fromEntries(groups.map((g) => [g.category, g.label]));
+  const companyLabel = Object.fromEntries(groups.flatMap((g) => g.companies.map((c) => [c.company, c.label])));
+  const names = [
+    ...state.categories.map((c) => groupLabel[c] ?? c),
+    ...state.companies.map((c) => companyLabel[c] ?? c),
+  ];
+  if (!names.length) return "All";
+  if (names.length <= 3) return names.join(", ");
+  return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
 }
 
 /** The status line's "where it runs", from /api/status `running.where`. */
