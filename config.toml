@@ -443,3 +443,13 @@ type = "umantis"                 # Bank J. Safra Sarasin's Umantis portal (Swiss
 base_url = "https://jsafrasarasin.umantis.com"
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "cargill"
+label = "Cargill"
+category = "trading"
+default_place = "Genève"   # the Geneva trading hub; only for jobs whose location can't be placed
+type = "radancy"                 # careers.cargill.com (Radancy): the Switzerland location page; robots.txt disallows /search-jobs/
+location_url = "https://careers.cargill.com/en/location/switzerland-jobs/23251/2658434/2"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
