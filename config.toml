@@ -453,3 +453,15 @@ type = "radancy"                 # careers.cargill.com (Radancy): the Switzerlan
 location_url = "https://careers.cargill.com/en/location/switzerland-jobs/23251/2658434/2"
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "totalenergies"
+label = "TotalEnergies"
+category = "trading"
+default_place = "Genève"   # the Geneva trading hub; only for jobs whose location can't be placed
+type = "avature"                 # jobs.totalenergies.com (Avature): text search for the country, results kept only if listed in it
+base_url = "https://jobs.totalenergies.com/en_US/careers"
+search = "Switzerland"
+country = "Switzerland"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

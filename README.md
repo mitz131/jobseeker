@@ -114,6 +114,7 @@ frontend/
 | Assura       | assura.ch (Cockpit CMS)           | JSON API (Markdown ads) |
 | J. Safra Sarasin | Umantis (jsafrasarasin.umantis.com) | HTML (no JSON API) |
 | Cargill      | Radancy (careers.cargill.com), Switzerland location page | HTML + JSON-LD |
+| TotalEnergies | Avature (jobs.totalenergies.com), text search "Switzerland" | HTML (no JSON API) |
 
 Adding a company on a supported platform is just a config entry (with a
 `category`, so it shows in its group on the page). Other
