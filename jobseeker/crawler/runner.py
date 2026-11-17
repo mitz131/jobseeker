@@ -71,6 +71,29 @@ def run_company(store: JobStore, client, company: dict, max_new: int) -> Company
     return result
 
 
+def interleave_by_platform(companies: list[dict]) -> list[dict]:
+    """Companies reordered so that each platform is spread evenly over the run and never
+    comes twice in a row unless unavoidable. A platform with n of the N companies would
+    ideally have its i-th at position (i + 0.5) * N / n; each step takes the platform whose
+    next company is most overdue, other than the one just used (ties: first in config).
+    Workday rate-limits across its customers' sites, so its companies back to back (as
+    config order had them) ended in HTTP 429s. Config order is kept within a platform."""
+    groups: dict[str, list[dict]] = {}
+    for company in companies:
+        groups.setdefault(company["type"], []).append(company)
+    total, sizes, taken = len(companies), {t: len(g) for t, g in groups.items()}, dict.fromkeys(groups, 0)
+    order, last = [], None
+    while len(order) < total:
+        left = [t for t in groups if taken[t] < sizes[t]]
+        candidates = [t for t in left if t != last] or left
+        last = min(candidates, key=lambda t: (taken[t] + 0.5) * total / sizes[t])  # min keeps the first on ties
+        order.append(groups[last][taken[last]])
+        taken[last] += 1
+    return order
+
+
 def run_all(store: JobStore, client, companies: list[dict], max_new: int) -> list[CompanyResult]:
-    """The batch: every company in turn; one company failing doesn't stop the others."""
-    return [run_company(store, client, company, max_new) for company in companies]
+    """The batch: every company in turn, platforms interleaved; one company failing
+    doesn't stop the others."""
+    return [run_company(store, client, company, max_new)
+            for company in interleave_by_platform(companies)]
