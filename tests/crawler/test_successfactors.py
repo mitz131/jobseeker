@@ -16,6 +16,31 @@ SF_LISTING = """
 </tr>
 """
 
+SF_TILES = """
+<span class="paginationLabel">Results <b>1 &ndash; 2</b> of <b>2</b></span>
+<ul class="job-list">
+<li class="job-tile" data-url="/job/Geneva-Risk-Oversight/1376710157/">
+  <div class="sub-section-desktop">
+    <a href="/job/Geneva-Risk-Oversight/1376710157/" class="jobTitle-link">Risk Oversight</a>
+    <div class="section-field location"><span class="section-label">Location</span>
+      <div>Geneva, Geneva, CH, CH 1211</div></div>
+  </div>
+  <div class="sub-section-mobile">
+    <a href="/job/Geneva-Risk-Oversight/1376710157/" class="jobTitle-link">Risk Oversight</a>
+    <div class="section-field location"><span class="section-label">Location</span>
+      <div>Geneva, Geneva, CH, CH 1211</div></div>
+  </div>
+</li>
+<li class="job-tile" data-url="/job/Zurich-Head-of-Compliance/1376709057/">
+  <div class="sub-section-desktop">
+    <a href="/job/Zurich-Head-of-Compliance/1376709057/" class="jobTitle-link">Head of Compliance</a>
+    <div class="section-field location"><span class="section-label">Location</span>
+      <div>Zurich, Zurich, CH, CH 8002</div></div>
+  </div>
+</li>
+</ul>
+"""
+
 SF_DETAIL = """<html><body><div class="header">x</div>
 <span class="jobdescription"><p>About the role</p><ul><li>Python</li><li>SQL</li></ul>
 <div><br/>Nested</div></span><footer>Footer</footer></body></html>"""
@@ -34,6 +59,16 @@ class SuccessFactorsTests(unittest.TestCase):
         self.assertEqual(refs[1].title, "QA & Test Lead")
         self.assertEqual(refs[0].location, "Vevey, CH")
         self.assertEqual(refs[0].url, "https://jobs.example.com/job/Vevey-Data-Engineer/1111111/")
+
+    def test_listing_with_tiles(self):
+        class TileClient:
+            def get_text(self, url):
+                return SF_TILES
+
+        refs = list(SuccessFactorsSource(TileClient(), "https://jobs.example.com").list_jobs())
+        self.assertEqual([r.job_id for r in refs], ["1376710157", "1376709057"])
+        self.assertEqual([r.location for r in refs], ["Geneva, Geneva, CH, CH 1211", "Zurich, Zurich, CH, CH 8002"])
+        self.assertEqual(refs[1].title, "Head of Compliance")
 
     def test_description_stops_at_its_own_closing_tag(self):
         html = extract_description(SF_DETAIL)

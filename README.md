@@ -107,6 +107,10 @@ frontend/
 | Gunvor       | Workday                           | JSON API            |
 | Temenos      | Workday                           | JSON API            |
 | BCGE         | jobs.bcge.ch (own portal, API Platform) | JSON API      |
+| Deutsche Bank | Workday                          | JSON API            |
+| JTI          | SAP SuccessFactors Career Site    | HTML (no JSON API)  |
+| P&G          | Phenom (pgcareers.com)            | JSON API            |
+| HSBC Private Bank | SAP SuccessFactors Career Site (tiles) | HTML (no JSON API) |
 
 Adding a company on a supported platform is just a config entry. Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`

@@ -1,8 +1,9 @@
-"""SAP SuccessFactors Career Site Builder sites (Nestle, BCV).
+"""SAP SuccessFactors Career Site Builder sites (Nestle, BCV, JTI, HSBC).
 
 Two generations of the search page exist:
 
-  listing = "html" (Nestle): results are server-rendered
+  listing = "html" (Nestle, JTI, HSBC): results are server-rendered, as table rows
+    or (HSBC) as tiles
     GET  {base}/search/?q=...&optionsFacetsDD_country=CH&startrow=N  -> listing (HTML)
   listing = "api" (BCV): results come from the site's own JSON endpoint, which
     needs the session cookie and the CSRF token embedded in the search page
@@ -30,6 +31,13 @@ CSRF_RE = re.compile(r'var CSRFToken = "([^"]+)"')
 
 def _text(el: Tag) -> str:
     return " ".join(el.get_text(" ").split())
+
+
+def _tile_location(tile: Tag) -> Tag | None:
+    """Location value of a result tile: the desktop copy, without its "Location" label."""
+    field = tile.select_one(".sub-section-desktop .section-field.location") or \
+        tile.select_one(".section-field.location")
+    return field.find("div") if field else None
 
 
 def _is_description(tag: Tag, classes: set[str]) -> bool:
@@ -124,7 +132,8 @@ class SuccessFactorsSource:
         startrow, seen = 0, set()
         while True:
             soup = BeautifulSoup(self.client.get_text(self._search_url(startrow)), "html.parser")
-            rows = soup.select("tr.data-row")
+            # Table layout (Nestle, JTI) or tile layout (HSBC: li.job-tile)
+            rows = soup.select("tr.data-row") or soup.select("li.job-tile")
             found = 0
             for row in rows or [soup]:
                 link = row.find("a", href=JOB_ID_RE)
@@ -133,7 +142,7 @@ class SuccessFactorsSource:
                 job_id = JOB_ID_RE.search(link["href"]).group(1)
                 seen.add(job_id)
                 found += 1
-                loc = row.select_one("span.jobLocation")
+                loc = row.select_one("span.jobLocation") or _tile_location(row)
                 if loc:
                     for badge in loc.find_all("small"):  # "+2 more..." on multi-location jobs
                         badge.decompose()

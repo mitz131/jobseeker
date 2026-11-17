@@ -319,3 +319,52 @@ default_place = "Genève"   # head office; only for jobs whose location can't be
 type = "bcge"                    # Banque Cantonale de Genève: jobs.bcge.ch's own JSON API (Swiss jobs only, no country filter needed)
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "deutschebank"
+label = "Deutsche Bank"
+# no default_place: two equal Swiss sites (Zürich, Genève)
+type = "workday"
+base_url = "https://db.wd3.myworkdayjobs.com"
+tenant = "db"
+site = "DBWebsite"
+search = ""
+facet_filters = { Country = ["Switzerland"] }   # Switzerland only (worldwide site)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "jti"
+label = "JTI"
+default_place = "Genève"   # global head office; only for jobs whose location can't be placed
+type = "successfactors"
+base_url = "https://jobs.jti.com"
+search = ""
+facets = { country = "CH" }      # server-side country filter (ISO code)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "pg"
+label = "P&G"
+default_place = "Petit-Lancy"   # European head office (Geneva Business Center); only for jobs whose location can't be placed
+type = "phenom"
+base_url = "https://www.pgcareers.com"
+locale_path = "eu/en"            # P&G's European site
+lang = "en_eu"
+site_country = "eu"
+search = ""
+selected_fields = { country = ["Switzerland"] }   # server-side facet, by name
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "hsbc"
+label = "HSBC Private Bank"
+default_place = "Genève"   # HSBC Private Bank (Suisse) head office; only for jobs whose location can't be placed
+type = "successfactors"
+base_url = "https://apply.careers.hsbc.com"   # results shown as tiles; mycareer.hsbc.com (Avature) has no Swiss jobs
+search = ""
+facets = { country = "CH" }      # server-side country filter (ISO code)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
