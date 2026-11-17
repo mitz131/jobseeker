@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
     "beautifulsoup4>=4.12",
+    "markdown>=3.7",
     "fastapi>=0.115",
     "uvicorn>=0.30",
 ]

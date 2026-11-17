@@ -424,3 +424,12 @@ search = ""
 facets = { country = "CH" }      # server-side country filter (ISO code)
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "assura"
+label = "Assura"
+category = "insurer"
+default_place = "Pully"   # head office; only for jobs whose location can't be placed
+type = "assura"                  # assura.ch careers pages: the site's Cockpit CMS API (Swiss jobs only, no country filter needed)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
