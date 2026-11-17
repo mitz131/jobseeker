@@ -9,6 +9,7 @@ from .phenom import PhenomSource
 from .sfcareer import SFCareerSource
 from .smartrecruiters import SmartRecruitersSource
 from .successfactors import SuccessFactorsSource
+from .umantis import UmantisSource
 from .vaudoise import VaudoiseSource
 from .workday import WorkdaySource
 
@@ -26,6 +27,7 @@ SOURCE_TYPES = {
     "lausanne": LausanneSource,
     "bcge": BCGESource,
     "assura": AssuraSource,
+    "umantis": UmantisSource,
 }
 
 
