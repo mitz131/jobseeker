@@ -112,7 +112,8 @@ frontend/
 | P&G          | Phenom (pgcareers.com)            | JSON API            |
 | HSBC Private Bank | SAP SuccessFactors Career Site (tiles) | HTML (no JSON API) |
 
-Adding a company on a supported platform is just a config entry. Other
+Adding a company on a supported platform is just a config entry (with a
+`category`, so it shows in its group on the page). Other
 platforms need a new class in `jobseeker/crawler/sources/` with `list_jobs()`
 and `fetch_detail()`.
 
@@ -212,7 +213,9 @@ jobseeker serve --host 0.0.0.0         # reachable from outside (e.g. from the s
 
 - **`/`** – the job list (plain JavaScript in `frontend/src/`, no build step).
   Filter by starting point and distance, location text, employer and closed
-  jobs; sort by date or distance; click a row for the description. Filters are
+  jobs. Employers are grouped by category (banks, trading houses, …; the
+  `[[category]]` list in `config.toml`); ticking a group selects every employer
+  in it, including ones added later; sort by date or distance; click a row for the description. Filters are
   kept in the page URL. When the data is older than 24 h, opening the page starts
   the update in the background and the list reloads when it's done.
 - **`/docs`** (Swagger UI) and `/redoc` – interactive API documentation.
@@ -222,9 +225,9 @@ From the sandbox host, publish the port first:
 
 | Endpoint | |
 |---|---|
-| `GET /api/jobs` | Jobs, newest first. `home` (postcode or locality) adds `distance_km`; `max_km`, `sort=distance`, `company` (repeatable), `location` (text, ignores case/accents), `include_closed`, `limit`/`offset` |
+| `GET /api/jobs` | Jobs, newest first. `home` (postcode or locality) adds `distance_km`; `max_km`, `sort=distance`, `company` (repeatable), `category` (repeatable; with `company`, jobs of either), `location` (text, ignores case/accents), `include_closed`, `limit`/`offset` |
 | `GET /api/jobs/{company}/{job_id}` | One job with its description (URL-encode the id: Workday ids contain `/`) |
-| `GET /api/status` | Last update, whether it's older than 24 h, refresh state, last run per company |
+| `GET /api/status` | Last update, whether it's older than 24 h, refresh state, last run and category per company, the category list |
 | `POST /api/refresh` | Start the batch in the background if the data is older than 24 h (`force=true`: always). One run at a time; returns immediately |
 
 A job is **open** when it was seen in its company's latest successful run;

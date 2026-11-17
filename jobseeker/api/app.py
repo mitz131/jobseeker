@@ -96,10 +96,16 @@ class Job(JobSummary):
 class CompanyStatus(BaseModel):
     company: str
     label: str  # display name: config `label`, else `company`
+    category: str | None = None  # config `category`; None: not in a defined category
     last_run_finished: str | None
     listed: int | None
     new: int | None
     error: str | None
+
+
+class Category(BaseModel):
+    category: str
+    label: str
 
 
 class Runtime(BaseModel):
@@ -136,6 +142,7 @@ class Status(BaseModel):
     unlabelled: int | None = None     # stored jobs without current labels; None: labels not configured
     running: Runtime                  # where this server runs
     companies: list[CompanyStatus]
+    categories: list[Category]       # employer groups from config.toml, in display order
 
 
 class LabelOption(BaseModel):
@@ -211,6 +218,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
 
     runtime = detect_runtime()
     company_labels = config.company_labels()
+    company_categories = config.company_categories()
     refresher = Refresher(batch or crawl, last_update, max_age)
     app = FastAPI(title="jobseeker", version="0.1.0",
                   description="Swiss job openings from employer career sites, "
@@ -246,6 +254,9 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         home: Annotated[str | None, Query(description='Starting point: postcode ("1020") or locality ("Renens VD")')] = None,
         max_km: Annotated[float | None, Query(ge=0, description="Only jobs within this distance of `home`")] = None,
         company: Annotated[list[str] | None, Query(description="Only these companies (repeatable)")] = None,
+        category: Annotated[list[str] | None, Query(
+            description="Only companies in these categories (repeatable); together with `company`, "
+                        "a job matches either")] = None,
         location: Annotated[str | None, Query(description="Text in the location, ignoring case and accents")] = None,
         include_closed: Annotated[bool, Query(description="Also jobs no longer listed by the employer")] = False,
         sort: Annotated[Literal["date", "distance"], Query(description="date: newest first; distance: nearest first")] = "date",
@@ -277,7 +288,8 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             item = summary(row, open_since)
             if not include_closed and not item["open"]:
                 continue
-            if company and row["company"] not in company:
+            if (company or category) and row["company"] not in (company or []) \
+                    and company_categories.get(row["company"]) not in (category or []):
                 continue
             if wanted_location and wanted_location not in norm(row["location"] or ""):
                 continue
@@ -330,7 +342,9 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             unlabelled=(db.conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
                         - len(current_labels(db.conn, current))) if current else None,
             running=runtime,
+            categories=[Category(category=c["name"], label=c["label"]) for c in config.categories()],
             companies=[CompanyStatus(company=r["company"], label=company_labels.get(r["company"], r["company"]),
+                                     category=company_categories.get(r["company"]),
                                      last_run_finished=r["finished_at"],
                                      listed=r["listed"], new=r["new"], error=r["error"])
                        for r in db.latest_runs()],

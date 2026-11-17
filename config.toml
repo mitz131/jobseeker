@@ -8,7 +8,34 @@ labels_file = "labels.toml"               # question sets and labelling backends
 # allowed_hosts = ["localhost", "127.0.0.1"]   # host names `serve` answers to (the default);
 #                                              # add e.g. a LAN address to reach it by that
 
+# Employer groups in the page's dropdown, in this order. Each company names one
+# with `category`; a company without one is listed under "Other".
+[[category]]
+name = "bank"
+label = "Banks"
+
+[[category]]
+name = "insurer"
+label = "Insurers"
+
+[[category]]
+name = "trading"
+label = "Trading houses"
+
+[[category]]
+name = "administration"
+label = "Administration"
+
+[[category]]
+name = "tech"
+label = "Tech & telecom"
+
+[[category]]
+name = "consumer"
+label = "Consumer goods"
+
 # label             : display name on the page (default: name), e.g. "Lombard Odier"
+# category          : employer group on the page, a [[category]] name above
 #
 # --- Filters -------------------------------------------------------------
 # search            : sent to the site's own search (server-side)
@@ -25,6 +52,7 @@ labels_file = "labels.toml"               # question sets and labelling backends
 [[company]]
 name = "salesforce"
 label = "Salesforce"
+category = "tech"
 default_place = "Zürich"   # largest Swiss office (Lausanne too); only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://salesforce.wd12.myworkdayjobs.com"
@@ -38,6 +66,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "philipmorris"
 label = "Philip Morris"
+category = "consumer"
 default_place = "Lausanne"   # head office (also a large site in Neuchâtel); only for jobs whose location can't be placed
 type = "phenom"
 base_url = "https://join.pmicareers.com"
@@ -49,6 +78,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "nestle"
 label = "Nestlé"
+category = "consumer"
 default_place = "Vevey"   # head office (many Swiss sites); only for jobs whose location can't be placed
 type = "successfactors"
 base_url = "https://jobdetails.nestle.com"
@@ -60,6 +90,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "logitech"
 label = "Logitech"
+category = "tech"
 default_place = "Lausanne"   # Swiss head office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://logitech.wd5.myworkdayjobs.com"
@@ -73,6 +104,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "vaudoise"
 label = "Vaudoise"
+category = "insurer"
 default_place = "Lausanne"   # head office; only for jobs whose location can't be placed
 type = "vaudoise"                # Switzerland-only employer: no country filter needed
 listing_url = "https://www.vaudoise.ch/fr/carrieres/postes-disponibles"
@@ -82,6 +114,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "etatdevaud"
 label = "État de Vaud"
+category = "administration"
 default_place = "Lausanne"   # cantonal capital; only for jobs whose location can't be placed
 type = "oracle"                  # Swiss public employer: no country filter needed
 host = "https://fa-ewrg-saasfaeuraprod1.fa.ocs.oraclecloud.com"
@@ -94,6 +127,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "bcv"
 label = "BCV"
+category = "bank"
 default_place = "Lausanne"   # head office; only for jobs whose location can't be placed
 type = "successfactors"          # newer career site: results come from a JSON endpoint
 base_url = "https://jobs.bcv.ch"
@@ -106,6 +140,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "salt"
 label = "Salt"
+category = "tech"
 default_place = "Prilly"   # head office, new tower at Prilly-Malley station (moved from Renens); only for jobs whose location can't be placed
 type = "jobcloud"                # job list hosted by JobCloud, linked from salt.ch/careers
 company = "salt-mobile-sa"
@@ -116,6 +151,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "cisco"
 label = "Cisco"
+category = "tech"
 type = "phenom"
 base_url = "https://careers.cisco.com"
 locale_path = "global/en"        # Cisco's site is global/en, not PMI's gb/en
@@ -130,6 +166,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "swisscom"
 label = "Swisscom"
+category = "tech"
 default_place = "Worblaufen"   # head office, Ittigen near Bern; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://swisscom.wd103.myworkdayjobs.com"
@@ -142,6 +179,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "creditagricole"
 label = "Crédit Agricole"
+category = "bank"
 default_place = "Genève"   # Swiss head office; only for jobs whose location can't be placed
 type = "creditagricole"          # group portal: Indosuez, CACEIS, CA-CIB... in one list
 base_url = "https://groupecreditagricole.jobs"
@@ -152,6 +190,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "pictet"
 label = "Pictet"
+category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "sfcareer"                # classic SuccessFactors portal, linked from pictet.com/careers
 host = "https://career012.successfactors.eu"
@@ -163,6 +202,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "lombardodier"
 label = "Lombard Odier"
+category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://lombardodier.wd3.myworkdayjobs.com"
@@ -182,6 +222,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "piguetgalland"
 label = "Piguet Galland"
+category = "bank"
 default_place = "Genève"   # main office; only for jobs whose location can't be placed
 type = "johdi"                   # Johdi Suite ATS, called by piguetgalland.ch/carrieres
 api_url = "https://ats.johdisuite.ch/api/company/eyJpdiI6ImlzTU9rOE51UG9nbWtBRUZvSTkrb0E9PSIsInZhbHVlIjoiMTU1dXlnQXlTRnZQZWNzWUI0c2h1UT09IiwibWFjIjoiMzQzN2JkOTIwODU0ZmZhMGQ1OWM2NWFiYTEyNmFkMWUzMTk2Mzc0ZWE3M2JmNTMwOWMxOGU3YTE3YzRiN2UyNyIsInRhZyI6IiJ9/publicationFlows/web"
@@ -193,6 +234,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "mirabaud"
 label = "Mirabaud"
+category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "smartrecruiters"         # SmartRecruiters' public API; mirabaud.com shows the same jobs
 company = "MirabaudCieSA"
@@ -205,6 +247,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "swissquote"
 label = "Swissquote"
+category = "bank"
 default_place = "Gland"   # head office; only for jobs whose location can't be placed
 type = "smartrecruiters"         # SmartRecruiters' public API; jobs.smartrecruiters.com is Swissquote's own careers site
 company = "Swissquote"
@@ -216,6 +259,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "ubp"
 label = "UBP"
+category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "oracle"                  # Union Bancaire Privée: Oracle Recruiting Cloud, linked from ubp.com
 host = "https://iaadtu.fa.ocs.oraclecloud.eu"
@@ -229,6 +273,7 @@ location_include = ["Switzerland"]   # also hires in Luxembourg and Jersey
 [[company]]
 name = "edmondderothschild"
 label = "Edmond de Rothschild"
+category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "oracle"                  # Oracle Recruiting Cloud, linked from edmond-de-rothschild.com (that site blocks bots)
 host = "https://evht.fa.ocs.oraclecloud.eu"
@@ -242,6 +287,7 @@ location_include = ["Switzerland"]   # also hires in France, Luxembourg, Belgium
 [[company]]
 name = "jpmorgan"
 label = "J.P. Morgan"
+category = "bank"
 default_place = "Genève"   # J.P. Morgan (Suisse) SA head office; only for jobs whose location can't be placed
 type = "oracle"                  # JPMorgan Chase: Oracle Recruiting Cloud (~7,000 jobs worldwide)
 host = "https://jpmc.fa.oraclecloud.com"
@@ -255,6 +301,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "lausanne"
 label = "Ville de Lausanne"
+category = "administration"
 default_place = "Lausanne"   # the city itself; only for jobs whose location can't be placed
 type = "lausanne"                # the city (the canton is etatdevaud); lausanne.ch's own job search
 [company.filter]
@@ -263,6 +310,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "trafigura"
 label = "Trafigura"
+category = "trading"
 default_place = "Genève"   # Swiss office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://trafigura.wd3.myworkdayjobs.com"
@@ -277,6 +325,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "vitol"
 label = "Vitol"
+category = "trading"
 default_place = "Genève"   # Swiss head office (Geneva); only for jobs whose location can't be placed
 type = "smartrecruiters"         # SmartRecruiters' public API; vitol.com/open-roles links to careers.smartrecruiters.com/vitol
 company = "vitol"
@@ -287,6 +336,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "gunvor"
 label = "Gunvor"
+category = "trading"
 default_place = "Genève"   # Geneva head office; only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://gunvor.wd3.myworkdayjobs.com"
@@ -302,6 +352,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "temenos"
 label = "Temenos"
+category = "tech"
 default_place = "Grand-Lancy"   # Geneva-area head office (register locality; Lancy alone is not in it); only for jobs whose location can't be placed
 type = "workday"
 base_url = "https://temenos.wd103.myworkdayjobs.com"
@@ -315,6 +366,7 @@ location_include = ["Switzerland", "Genève", "Geneva", "Lancy", "Zurich", "Zür
 [[company]]
 name = "bcge"
 label = "BCGE"
+category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "bcge"                    # Banque Cantonale de Genève: jobs.bcge.ch's own JSON API (Swiss jobs only, no country filter needed)
 [company.filter]
@@ -323,6 +375,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "deutschebank"
 label = "Deutsche Bank"
+category = "bank"
 # no default_place: two equal Swiss sites (Zürich, Genève)
 type = "workday"
 base_url = "https://db.wd3.myworkdayjobs.com"
@@ -336,6 +389,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "jti"
 label = "JTI"
+category = "consumer"
 default_place = "Genève"   # global head office; only for jobs whose location can't be placed
 type = "successfactors"
 base_url = "https://jobs.jti.com"
@@ -347,6 +401,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "pg"
 label = "P&G"
+category = "consumer"
 default_place = "Petit-Lancy"   # European head office (Geneva Business Center); only for jobs whose location can't be placed
 type = "phenom"
 base_url = "https://www.pgcareers.com"
@@ -361,6 +416,7 @@ title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", 
 [[company]]
 name = "hsbc"
 label = "HSBC Private Bank"
+category = "bank"
 default_place = "Genève"   # HSBC Private Bank (Suisse) head office; only for jobs whose location can't be placed
 type = "successfactors"
 base_url = "https://apply.careers.hsbc.com"   # results shown as tiles; mycareer.hsbc.com (Avature) has no Swiss jobs
