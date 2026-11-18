@@ -249,7 +249,9 @@ other websites open in the same browser:
   `curl -X POST -H 'X-Jobseeker: 1' 'http://127.0.0.1:8090/api/refresh?force=true'`
 - The app only answers to `localhost` and `127.0.0.1` (protection against DNS
   rebinding). To reach it by another name or address, list them under
-  `allowed_hosts` in `config.toml`.
+  `allowed_hosts` in `config.toml`, or (to keep them out of the repository)
+  in the environment variable `JOBSEEKER_ALLOWED_HOSTS`, comma-separated, which
+  adds to the list (Kubernetes: `deploy/local.env`, not in git).
 - The page may only load its own scripts and styles, and can't be shown in a
   frame on another site; job links are kept only if they are `http(s)` addresses.
 

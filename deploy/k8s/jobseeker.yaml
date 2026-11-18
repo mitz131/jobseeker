@@ -83,6 +83,10 @@ spec:
               value: http://192.168.49.1:3128
             - name: NO_PROXY
               value: localhost,127.0.0.1,::1,.svc,.cluster.local,10.96.0.0/12,10.244.0.0/16
+          envFrom:                      # this machine's settings (deploy/local.env, not in git),
+            - configMapRef:             # e.g. JOBSEEKER_ALLOWED_HOSTS; none: the defaults
+                name: jobseeker-local
+                optional: true
           volumeMounts:
             - name: data
               mountPath: /app/data

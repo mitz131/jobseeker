@@ -5,7 +5,7 @@ from urllib.parse import quote
 import pytest
 from fastapi.testclient import TestClient
 
-from jobseeker.api.app import create_app, web_link
+from jobseeker.api.app import allowed_hosts, create_app, web_link
 from jobseeker.config import Config
 from jobseeker.db import JobStore
 from tests.test_places import HEADER, ROWS
@@ -277,6 +277,16 @@ def test_only_local_host_names_are_served(config):
     assert client.get("/api/status").status_code == 200
     assert client.get("/api/status", headers={"Host": "127.0.0.1:8090"}).status_code == 200
     assert client.get("/api/status", headers={"Host": "attacker.example"}).status_code == 400
+    assert client.get("/api/status", headers={"Host": "192.168.1.50:8090"}).status_code == 400
+
+
+def test_extra_host_names_from_the_environment(config, monkeypatch):
+    monkeypatch.setenv("JOBSEEKER_ALLOWED_HOSTS", " 192.168.1.50, desktop.lan ,")
+    client, _ = client_for(config)
+    for host in ("localhost", "192.168.1.50:8090", "desktop.lan:8090"):
+        assert client.get("/api/status", headers={"Host": host}).status_code == 200, host
+    assert client.get("/api/status", headers={"Host": "attacker.example"}).status_code == 400
+    assert allowed_hosts(Config(config.path, {}), {}) == ["localhost", "127.0.0.1"]   # without the variable
 
 
 def test_security_headers(config):
