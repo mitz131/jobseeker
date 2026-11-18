@@ -12,10 +12,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/128.0 Safari/537.36"
-)
+# Says what this is, rather than posing as a browser
+USER_AGENT = "jobseeker/1.0 (personal job search; one run per day)"
 RETRY_STATUSES = (429, 500, 502, 503, 504)
 MAX_BYTES = 20 * 1024 * 1024   # per response, after decompression; job pages are < 1 MB
 MAX_SECONDS = 120              # per response, in total (`timeout` is per read: silence only)
