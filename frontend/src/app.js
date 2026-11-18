@@ -2,7 +2,7 @@
 // is always inserted with textContent, never as HTML.
 
 import {
-  availableQuickFilters, debounce, employerGroups, employersSummary, formatAge, formatDate, formatKm, groupState,
+  availableQuickFilters, debounce, employerGroups, employersSummary, filtersSummary, formatAge, formatDate, formatKm, groupState,
   jobPath, jobsQuery, labelTags, optionName, questionName, quickFilterActive, runtimeText, shortLocation,
   stateFromSearch, stateToSearch, toggleCompany, toggleGroup, toggleLabel, toggleQuickFilter, webLink,
 } from "./lib.js";
@@ -71,7 +71,19 @@ function onFiltersChanged() {
   updateDistanceControls();
   readControls();
   window.history.replaceState(null, "", window.location.pathname + stateToSearch(state));
+  showFiltersSummary();
   loadJobs();
+}
+
+/** Narrow screens: the filters fold behind a bar that says which ones are active.
+ *  On wide screens the bar is hidden and the fold has no effect (style.css). */
+function showFiltersSummary() {
+  $("filters-summary").textContent = filtersSummary(state, employersSummary(state, groups));
+}
+
+function toggleFilters() {
+  const folded = $("filters").classList.toggle("folded");
+  $("filters-toggle").setAttribute("aria-expanded", String(!folded));
 }
 
 /** The employer dropdown: a group per category, each with a checkbox for the whole group
@@ -143,6 +155,7 @@ function setCompanies({ companies, categories }) {
 
 function showCompanySummary() {
   $("companies-summary").textContent = employersSummary(state, groups);
+  showFiltersSummary();
   $("companies-actions").hidden = !state.companies.length && !state.categories.length;
 }
 
@@ -419,7 +432,9 @@ async function start() {
   $("refresh").addEventListener("click", () => refresh(true));
   $("clear-labels").addEventListener("click", () => setLabels([]));
   $("companies-clear").addEventListener("click", clearCompanies);
+  $("filters-toggle").addEventListener("click", toggleFilters);
   closeDropdownOutside($("companies"));
+  showFiltersSummary();
 
   try {
     buildLabelFilters((await api("/api/labels")).questions);

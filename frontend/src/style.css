@@ -207,6 +207,82 @@ tr.detail td { background: var(--bg); }
   margin: 4px 0 8px;
 }
 
+/* The filters' fold bar exists for narrow screens only */
+.filters-toggle { display: none; }
+
+/* Narrow screens (phones): folded filters, touch-sized controls, jobs as cards */
 @media (max-width: 700px) {
-  .col-company, .col-date { display: none; }
+  body { padding: 0 12px 24px; font-size: 15px; }
+  header { padding: 12px 0 8px; align-items: center; }
+  .status { flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .status button { padding: 6px 12px; }
+
+  /* Filters: one bar with a summary; tapping it shows the form */
+  .filters { padding: 0; gap: 12px; }
+  .filters-toggle {
+    display: flex;
+    flex-basis: 100%;
+    gap: 8px;
+    align-items: baseline;
+    padding: 12px;
+    border: 0;
+    background: none;
+    text-align: left;
+  }
+  .filters-toggle-title { font-weight: 600; }
+  .filters-toggle-title::after { content: " ▾"; color: var(--muted); }
+  .filters:not(.folded) .filters-toggle-title::after { content: " ▴"; }
+  .filters-summary { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .filters.folded > :not(.filters-toggle, .error) { display: none; }
+  .filters:not(.folded) { padding-bottom: 12px; }
+  .filters:not(.folded) > :not(.filters-toggle) { margin: 0 12px; }
+  .filters .error { padding: 0 12px 12px; }
+
+  /* one field per line, full width; 16px text so the browser doesn't zoom on focus */
+  .filters label, .filters .field { flex-basis: 100%; }
+  /* the fields' names in one column, their inputs lined up after it */
+  .filters > label:not(.check), .filters > .field {
+    display: grid;
+    grid-template-columns: 5.5em minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+  }
+  .filters > label:has(input.narrow) { grid-template-columns: 5.5em 6em 1fr; }   /* Within [60] km */
+  input, select, .dropdown > summary { font-size: 16px; padding: 8px 10px; }
+  input[type=checkbox] { width: 20px; height: 20px; }
+  .filters label.check, .dropdown-list label, .label-group label { min-height: 32px; }
+  /* the employer panel spans the whole row (under "Employers" too); long names wrap */
+  .filters > .field { position: relative; }
+  .filters .dropdown { position: static; }
+  .dropdown-panel { left: 0; right: 0; min-width: 0; max-width: none; }
+  .filters .dropdown-list label { white-space: normal; }
+  .dropdown-list input[type=checkbox] { flex-shrink: 0; }
+  .quick-filter { padding: 6px 12px; }
+
+  /* Jobs as cards: title (with its tags), employer · location · distance, first seen */
+  #jobs, #jobs tbody { display: block; background: none; }
+  #jobs thead { display: none; }
+  #jobs tr.job {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "title title title" "company location distance" "date date date";
+    gap: 2px 0;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  #jobs td { display: block; padding: 0; border: 0; }
+  #jobs td:nth-child(3) { grid-area: title; margin-bottom: 4px; font-size: 16px; }
+  #jobs td.col-company { grid-area: company; color: var(--muted); }
+  #jobs td.col-location { grid-area: location; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #jobs td.col-location:not(:empty)::before { content: "\00a0· "; }
+  #jobs td.col-distance { grid-area: distance; padding-left: 10px; }
+  #jobs td.col-distance .via { display: none; }
+  #jobs td.col-date { grid-area: date; color: var(--muted); font-size: 13px; }
+  #jobs td.col-date::before { content: "First seen "; }
+  #jobs tr.detail { display: block; margin: -6px 0 8px; }
+  #jobs tr.detail td { padding: 4px 12px 12px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; }
+  .description { max-width: none; }
 }

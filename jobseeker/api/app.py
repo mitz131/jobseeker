@@ -39,8 +39,8 @@ FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "src"
 
 # Host names the app answers to; config.toml `allowed_hosts` replaces them
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-# Comma-separated host names added to those, e.g. the desktop's address on the home
-# network; set outside the repository (deploy/local.env -> the pod's environment)
+# Comma-separated host names added to those, e.g. a LAN address; set outside the
+# repository (deploy/local.env -> the pod's environment)
 ALLOWED_HOSTS_ENV = "JOBSEEKER_ALLOWED_HOSTS"
 
 

@@ -1,6 +1,6 @@
 data/
 run.log
-# this machine's deploy settings (home network address)
+# local deployment settings (kept out of the repository)
 deploy/local.env
 __pycache__/
 .venv/
