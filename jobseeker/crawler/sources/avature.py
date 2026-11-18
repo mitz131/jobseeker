@@ -2,7 +2,7 @@
 
 Everything is server-rendered HTML:
 
-  GET {base_url}/SearchJobs/<search>        (same as SearchJobs/?search=<search>)
+  GET {base_url}/SearchJobs/?<country_field>[]=<country_id>&listFilterMode=1
       -> 20 results per page (div.article--result): a link to JobDetail/<slug>/<id>,
          then list items jobCreationDate (dd-mm-yyyy), jobCountry, employmentType, ...
          and a "next page" link (a.paginationNextLink, jobOffset=) while there are more
@@ -10,14 +10,17 @@ Everything is server-rendered HTML:
       -> dl.article__content__view__field blocks: labelled facts (Country, City,
          Workplace location, Domain, Type of contract, ...) then the ad, unlabelled
 
-The Country filter's option ids are loaded by a separate request, so the source searches
-for the country's name as text and keeps only results whose listed country is that one.
+The Country filter takes an option id, not a name: the search page's form loads the
+options by a separate request (autocomplete), so the field number and the country's id go
+in the config (TotalEnergies: field 3834, Switzerland 41579, read in the browser's
+developer tools). Each listed job's country is still checked against `country`, so a wrong
+id gives no jobs rather than other countries' jobs.
 The list has no city; the job page's City becomes the job's location.
 """
 
 import re
 from collections.abc import Iterator
-from urllib.parse import quote, urljoin
+from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup, Tag
 
@@ -64,24 +67,28 @@ def parse_results(page_html: str, page_url: str) -> tuple[list[tuple[JobRef, str
 
 
 class AvatureSource:
-    def __init__(self, client, base_url: str, search: str, country: str = "Switzerland", **_):
+    def __init__(self, client, base_url: str, country_field: int | str, country_id: int | str,
+                 country: str = "Switzerland", **_):
         self.client = client
         self.base_url = base_url.rstrip("/")   # e.g. https://jobs.totalenergies.com/en_US/careers
-        self.search = search
+        self.country_field = country_field
+        self.country_id = country_id
         self.country = country
 
     def list_jobs(self) -> Iterator[JobRef]:
-        url, seen = f"{self.base_url}/SearchJobs/{quote(self.search)}", set()
+        query = urlencode({f"{self.country_field}[]": self.country_id, "listFilterMode": 1})
+        url, seen = f"{self.base_url}/SearchJobs/?{query}", set()
         for _ in range(MAX_PAGES):
             jobs, url = parse_results(self.client.get_text(url), url)
             new = [(r, c) for r, c in jobs if r.job_id not in seen]
             seen.update(r.job_id for r, _ in new)
-            # the search is free text: a job elsewhere that mentions the country is dropped
+            # a safety net: with a wrong or reused id, other countries' jobs are dropped
             yield from (r for r, c in new if c.casefold() == self.country.casefold())
             if not new or not url:
                 break
         else:
-            raise RuntimeError(f"{self.base_url}: more than {MAX_PAGES} pages of results for {self.search!r}")
+            raise RuntimeError(f"{self.base_url}: more than {MAX_PAGES} pages of results for "
+                               f"{self.country_field}[]={self.country_id}")
 
     def fetch_detail(self, ref: JobRef) -> JobDetail:
         soup = BeautifulSoup(self.client.get_text(ref.url), "html.parser")

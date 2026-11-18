@@ -3,8 +3,8 @@ import unittest
 from jobseeker.crawler.sources.avature import AvatureSource, iso_date
 
 BASE = "https://portal.example.test/en_US/careers"
-LIST_URL = BASE + "/SearchJobs/Switzerland"
-PAGE_2_URL = BASE + "/SearchJobs/Switzerland?jobRecordsPerPage=20&jobOffset=20"
+LIST_URL = BASE + "/SearchJobs/?77%5B%5D=123&listFilterMode=1"
+PAGE_2_URL = BASE + "/SearchJobs/?77=%5B123%5D&listFilterMode=1&jobRecordsPerPage=20&jobOffset=20"
 
 
 def result(job_id, title, country, date="16-11-2026", kind="Regular position"):
@@ -28,7 +28,7 @@ def page(results, total, next_href=None):
 
 
 PAGE_1 = page([result("901", "Trader fictif", "Switzerland"),
-               result("902", "Analyste fictif", "France", date="3-9-2026")],   # mentions Switzerland somewhere
+               result("902", "Analyste fictif", "France", date="3-9-2026")],   # not Switzerland, despite the filter
               3, next_href=PAGE_2_URL.replace("&", "&amp;"))
 PAGE_2 = page([result("903", "Opérateur fictif", "Switzerland", kind="Fixed term position")], 3)
 
@@ -60,9 +60,9 @@ class AvatureTests(unittest.TestCase):
         self.assertEqual(iso_date("16-11-2026"), "2026-11-16")
         self.assertEqual(iso_date("3-9-2026"), "2026-09-03")
 
-    def test_listing_follows_pages_and_keeps_only_the_country(self):
+    def test_listing_filters_by_country_follows_pages_and_checks_the_country(self):
         client = FakeClient({LIST_URL: PAGE_1, PAGE_2_URL: PAGE_2})
-        refs = list(AvatureSource(client, base_url=BASE + "/", search="Switzerland").list_jobs())
+        refs = list(AvatureSource(client, base_url=BASE + "/", country_field=77, country_id=123).list_jobs())
         self.assertEqual(client.urls, [LIST_URL, PAGE_2_URL])
         self.assertEqual([(r.job_id, r.title, r.posted_on, r.url, r.extra) for r in refs], [
             ("901", "Trader fictif", "2026-11-16", BASE + "/JobDetail/Trader-fictif/901",
@@ -73,17 +73,17 @@ class AvatureTests(unittest.TestCase):
 
     def test_no_results_is_not_an_error(self):
         client = FakeClient({LIST_URL: page([], 0)})
-        self.assertEqual(list(AvatureSource(client, base_url=BASE, search="Switzerland").list_jobs()), [])
+        self.assertEqual(list(AvatureSource(client, base_url=BASE, country_field=77, country_id=123).list_jobs()), [])
 
     def test_changed_layout_is_an_error(self):
         client = FakeClient({LIST_URL: "<html><body>Maintenance</body></html>"})
         with self.assertRaises(RuntimeError):
-            list(AvatureSource(client, base_url=BASE, search="Switzerland").list_jobs())
+            list(AvatureSource(client, base_url=BASE, country_field=77, country_id=123).list_jobs())
 
     def test_detail_has_the_city_and_the_ad(self):
         job_url = BASE + "/JobDetail/Trader-fictif/901"
         src = AvatureSource(FakeClient({LIST_URL: PAGE_1, PAGE_2_URL: PAGE_2, job_url: DETAIL}),
-                            base_url=BASE, search="Switzerland")
+                            base_url=BASE, country_field=77, country_id=123)
         d = src.fetch_detail(next(src.list_jobs()))
         self.assertEqual(d.location, "GENEVE")
         self.assertEqual(d.raw["fields"], {"Country": "Switzerland", "City": "GENEVE", "Domain": "Trading"})
@@ -95,6 +95,6 @@ class AvatureTests(unittest.TestCase):
     def test_detail_without_fields_is_an_error(self):
         job_url = BASE + "/JobDetail/Trader-fictif/901"
         src = AvatureSource(FakeClient({LIST_URL: PAGE_1, PAGE_2_URL: PAGE_2, job_url: "<html>Maintenance</html>"}),
-                            base_url=BASE, search="Switzerland")
+                            base_url=BASE, country_field=77, country_id=123)
         with self.assertRaises(RuntimeError):
             src.fetch_detail(next(src.list_jobs()))
