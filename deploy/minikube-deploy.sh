@@ -15,6 +15,14 @@ python=${PYTHON:-.venv/bin/python}
 docker build -t "$image" .
 minikube image load --overwrite=true "$image"
 kubectl apply -f deploy/k8s/jobseeker.yaml
+# This machine's settings, kept out of git (e.g. JOBSEEKER_ALLOWED_HOSTS=192.168.1.50):
+# deploy/local.env -> ConfigMap jobseeker-local, read by the pod. No file: no ConfigMap.
+if [[ -f deploy/local.env ]]; then
+  kubectl -n "$ns" create configmap jobseeker-local --from-env-file=deploy/local.env \
+    --dry-run=client -o yaml | kubectl apply -f -
+else
+  kubectl -n "$ns" delete configmap jobseeker-local --ignore-not-found
+fi
 
 volume_has_db() {
   kubectl -n "$ns" exec seed -- test -f /app/data/jobs.db 2>/dev/null

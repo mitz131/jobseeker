@@ -8,13 +8,14 @@ The API has no login: it is meant for one person, on their own machine. What kee
 other websites in the same browser out:
 - the POST endpoints need the `X-Jobseeker` header, which a cross-site page can't send
   (that would need a CORS preflight, and the app allows none);
-- only the host names in `allowed_hosts` are served (against DNS rebinding);
+- only the host names in `allowed_hosts` (plus JOBSEEKER_ALLOWED_HOSTS) are served
+  (against DNS rebinding);
 - the page may only load its own scripts and styles, and can't be framed.
 """
 
 import os
 import socket
-from collections.abc import Awaitable, Callable, Iterator
+from collections.abc import Awaitable, Callable, Iterator, Mapping
 from datetime import timedelta
 from pathlib import Path
 from typing import Annotated, Literal
@@ -38,6 +39,15 @@ FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend" / "src"
 
 # Host names the app answers to; config.toml `allowed_hosts` replaces them
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+# Comma-separated host names added to those, e.g. the desktop's address on the home
+# network; set outside the repository (deploy/local.env -> the pod's environment)
+ALLOWED_HOSTS_ENV = "JOBSEEKER_ALLOWED_HOSTS"
+
+
+def allowed_hosts(config: Config, env: Mapping[str, str] = os.environ) -> list[str]:
+    """config.toml's list (or the default), plus the ones in JOBSEEKER_ALLOWED_HOSTS."""
+    extra = [h.strip() for h in env.get(ALLOWED_HOSTS_ENV, "").split(",") if h.strip()]
+    return list(dict.fromkeys([*(config.allowed_hosts or ALLOWED_HOSTS), *extra]))
 
 SECURITY_HEADERS = {
     "Content-Security-Policy": "default-src 'self'; object-src 'none'; base-uri 'none'; "
@@ -389,7 +399,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
                 response.headers.setdefault(name, value)
         return response
 
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=config.allowed_hosts or ALLOWED_HOSTS)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts(config))
 
     # Mounted last, so the API routes and /docs take precedence over files
     if frontend_dir and frontend_dir.is_dir():
