@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employerGroups, employersSummary, formatAge, formatDate,
+  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employerGroups, employersSummary, filtersSummary, formatAge, formatDate,
   formatKm, groupState, jobPath, jobsQuery, labelTags, quickFilterActive, runtimeText, shortLocation, sortEmployers,
   stateFromSearch, stateToSearch, toggleCompany, toggleGroup, toggleLabel, toggleQuickFilter, webLink,
 } from "../src/lib.js";
@@ -208,4 +208,15 @@ test("only web addresses become links", () => {
   for (const bad of ["javascript:alert(1)", " JavaScript:alert(1)", "data:text/html,x", "/relative", "", null]) {
     assert.equal(webLink(bad), null, String(bad));
   }
+});
+
+test("folded filters summary", () => {
+  assert.equal(filtersSummary(DEFAULT_STATE), "none");
+  const state = { ...DEFAULT_STATE, home: "1020", maxKm: "60", labels: ["computer_engineering:yes"] };
+  assert.equal(filtersSummary(state), "1020 · 60 km · IT jobs");
+  assert.equal(filtersSummary({ ...state, maxKm: "", labels: ["computer_engineering:yes", "seniority:junior", "employment_type:fixed_term"] }),
+               "1020 · IT jobs · Entry level · 1 label filter");
+  assert.equal(filtersSummary({ ...DEFAULT_STATE, location: "Lausanne", labels: ["a:b", "c:d"], includeClosed: true, sort: "distance" }, "Banks"),
+               "in Lausanne · Banks · 2 label filters · incl. closed · nearest first");
+  assert.equal(filtersSummary(DEFAULT_STATE, "All"), "none");
 });

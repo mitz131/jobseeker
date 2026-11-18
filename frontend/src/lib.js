@@ -296,6 +296,24 @@ export function employersSummary(state, groups) {
   return `${names.slice(0, 2).join(", ")} +${names.length - 2} more`;
 }
 
+/** One line for the folded filters on narrow screens, e.g. "1020 · 60 km · IT jobs":
+ *  active quick filters by name, other label filters counted. `employers` is the
+ *  dropdown's text (employersSummary), "All" meaning no filter. */
+export function filtersSummary(state, employers = "All") {
+  const parts = [];
+  if (state.home) parts.push(state.maxKm ? `${state.home} · ${state.maxKm} km` : state.home);
+  if (state.location) parts.push(`in ${state.location}`);
+  if (employers && employers !== "All") parts.push(employers);
+  const quick = QUICK_FILTERS.filter((f) => quickFilterActive(state.labels, f));
+  const covered = new Set(quick.flatMap((f) => f.labels));
+  const others = state.labels.filter((l) => !covered.has(l)).length;
+  parts.push(...quick.map((f) => f.name));
+  if (others) parts.push(`${others} label filter${others === 1 ? "" : "s"}`);
+  if (state.includeClosed) parts.push("incl. closed");
+  if (state.sort === "distance") parts.push("nearest first");
+  return parts.join(" · ") || "none";
+}
+
 /** The status line's "where it runs", from /api/status `running.where`. */
 export function runtimeText(where) {
   return { kubernetes: "on Kubernetes", container: "in a container", local: "running locally" }[where] ?? where;

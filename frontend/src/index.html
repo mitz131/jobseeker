@@ -20,7 +20,12 @@
 
   <div id="banner" class="banner" hidden></div>
 
-  <form id="filters" class="filters" autocomplete="off">
+  <form id="filters" class="filters folded" autocomplete="off">
+    <!-- narrow screens only: the form folds behind this bar (see style.css) -->
+    <button id="filters-toggle" type="button" class="filters-toggle" aria-expanded="false" aria-controls="filters">
+      <span class="filters-toggle-title">Filters</span>
+      <span id="filters-summary" class="filters-summary"></span>
+    </button>
     <label>From
       <input id="home" name="home" placeholder="postcode or town, e.g. 1020" size="22">
     </label>
