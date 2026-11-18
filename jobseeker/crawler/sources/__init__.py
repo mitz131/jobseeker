@@ -1,4 +1,5 @@
 from .assura import AssuraSource
+from .avature import AvatureSource
 from .bcge import BCGESource
 from .creditagricole import CreditAgricoleSource
 from .jobcloud import JobCloudSource
@@ -30,6 +31,7 @@ SOURCE_TYPES = {
     "assura": AssuraSource,
     "umantis": UmantisSource,
     "radancy": RadancySource,
+    "avature": AvatureSource,
 }
 
 
