@@ -251,7 +251,7 @@ other websites open in the same browser:
   rebinding). To reach it by another name or address, list them under
   `allowed_hosts` in `config.toml`, or (to keep them out of the repository)
   in the environment variable `JOBSEEKER_ALLOWED_HOSTS`, comma-separated, which
-  adds to the list. For Kubernetes, see "Reaching the page from the home network".
+  adds to the list (Kubernetes: `deploy/local.env`, not in git).
 - The page may only load its own scripts and styles, and can't be shown in a
   frame on another site; job links are kept only if they are `http(s)` addresses.
 
@@ -283,26 +283,6 @@ The page is then on sandbox port 8090 (on the host: `sbx ports <sandbox> --publi
 `minikube-network.sh` relays sandbox port 8090 to it, so the page stays reachable
 across pod restarts and redeploys. `JOBSEEKER_PORT=8091 deploy/minikube-network.sh`
 picks another port, e.g. while a local `jobseeker serve` has 8090.
-
-### Reaching the page from the home network
-
-To open the page on a phone at home (say the desktop is `192.168.1.50`, reserved for
-it in the router):
-
-1. Publish the port on all of the host's adapters: `sbx ports <sandbox> --publish
-   0.0.0.0:8090:8090` (the default binds localhost only).
-2. On a Windows host, let only the local network in, in an admin PowerShell:
-   `New-NetFirewallRule -DisplayName "jobseeker 8090 (LAN)" -Direction Inbound -Protocol TCP
-   -LocalPort 8090 -Profile Private -RemoteAddress LocalSubnet -Action Allow`, with the home
-   network set to Private.
-3. Let the app answer to that address: `deploy/local.env` (not in git) with
-   `JOBSEEKER_ALLOWED_HOSTS=192.168.1.50`, then `deploy/minikube-deploy.sh`. The script
-   turns the file into the ConfigMap `jobseeker-local`, which the pod reads; without the
-   file it removes the ConfigMap.
-
-The phone then opens `http://192.168.1.50:8090`. There is no login: anyone on that network
-can use the page, including starting a refresh. Android doesn't resolve `.local` names, hence
-the address.
 
 Networking in the sandbox needs two fixes (besides the web relay), all lost when minikube restarts:
 the node's `FORWARD` chain defaults to `DROP` (left by Docker in minikube's node
