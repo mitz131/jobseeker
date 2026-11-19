@@ -2,7 +2,7 @@
 // is always inserted with textContent, never as HTML.
 
 import {
-  availableQuickFilters, debounce, employerGroups, employersSummary, filtersSummary, formatAge, formatDate, formatKm, groupState,
+  availableQuickFilters, crawlingText, debounce, employerGroups, employersSummary, filtersSummary, formatAge, formatDate, formatKm, groupState,
   jobPath, jobsQuery, labelTags, optionName, questionName, quickFilterActive, runtimeText, shortLocation,
   stateFromSearch, stateToSearch, toggleCompany, toggleGroup, toggleLabel, toggleQuickFilter, webLink,
 } from "./lib.js";
@@ -349,7 +349,7 @@ function renderStatus(s) {
     const progress = s.refresh_total ? ` ${s.refresh_done ?? 0} of ${s.refresh_total}` : "";
     banner.textContent = `Labelling new jobs in the background:${progress}. The list updates when it's done.`;
   } else if (s.refresh_running) {
-    banner.textContent = `Fetching new jobs from all employers in the background (started ${formatAge(s.refresh_started_at)}). New jobs are labelled afterwards; the list updates when it's done.`;
+    banner.textContent = crawlingText(s);
   } else if (s.refresh_error) {
     banner.textContent = `The last update failed: ${s.refresh_error}`;
   } else if (failed.length) {

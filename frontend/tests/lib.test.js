@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, employerGroups, employersSummary, filtersSummary, formatAge, formatDate,
+  DEFAULT_STATE, QUICK_FILTERS, availableQuickFilters, crawlingText, employerGroups, employersSummary, filtersSummary, formatAge, formatDate,
   formatKm, groupState, jobPath, jobsQuery, labelTags, quickFilterActive, runtimeText, shortLocation, sortEmployers,
   stateFromSearch, stateToSearch, toggleCompany, toggleGroup, toggleLabel, toggleQuickFilter, webLink,
 } from "../src/lib.js";
@@ -219,4 +219,14 @@ test("folded filters summary", () => {
   assert.equal(filtersSummary({ ...DEFAULT_STATE, location: "Lausanne", labels: ["a:b", "c:d"], includeClosed: true, sort: "distance" }, "Banks"),
                "in Lausanne · Banks · 2 label filters · incl. closed · nearest first");
   assert.equal(filtersSummary(DEFAULT_STATE, "All"), "none");
+});
+
+test("the crawling banner names the employer and its position in the run", () => {
+  const now = new Date("2026-11-19T10:05:00Z");
+  const started = { refresh_started_at: "2026-11-19T10:00:00Z" };
+  assert.equal(crawlingText({ ...started, refresh_current: "Pictet", refresh_done: 21, refresh_total: 33 }, now),
+    "Fetching new jobs from Pictet (21/33), started 5 min ago. New jobs are labelled afterwards; the list updates when it's done.");
+  // before the batch has reported its first employer
+  assert.match(crawlingText({ ...started, refresh_current: null, refresh_done: null, refresh_total: null }, now),
+    /^Fetching new jobs from all employers, started 5 min ago\./);
 });

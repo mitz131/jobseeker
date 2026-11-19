@@ -217,6 +217,25 @@ def test_one_refresh_at_a_time(config):
     assert status["refresh_running"] is False and status["refresh_finished_at"]
 
 
+def test_status_shows_the_employer_being_crawled(config):
+    reported, release, holder = threading.Event(), threading.Event(), {}
+
+    def batch():
+        holder["refresher"].report("crawling", 21, 33, "Pictet")
+        reported.set()
+        release.wait(timeout=5)
+
+    client, holder["refresher"] = client_for(config, max_age=STALE, batch=batch)
+    client.post("/api/refresh")
+    assert reported.wait(timeout=5)
+    status = client.get("/api/status").json()
+    assert (status["refresh_phase"], status["refresh_current"], status["refresh_done"], status["refresh_total"]) \
+        == ("crawling", "Pictet", 21, 33)
+    release.set()
+    assert holder["refresher"].wait(timeout=5)
+    assert client.get("/api/status").json()["refresh_current"] is None
+
+
 def test_crashing_batch_is_reported(config):
     def broken():
         raise RuntimeError("network down")

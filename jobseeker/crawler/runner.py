@@ -2,6 +2,7 @@
 
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from ..db import JobStore, now
@@ -92,8 +93,14 @@ def interleave_by_platform(companies: list[dict]) -> list[dict]:
     return order
 
 
-def run_all(store: JobStore, client, companies: list[dict], max_new: int) -> list[CompanyResult]:
+def run_all(store: JobStore, client, companies: list[dict], max_new: int,
+            progress: Callable[[int, int, dict], None] | None = None) -> list[CompanyResult]:
     """The batch: every company in turn, platforms interleaved; one company failing
-    doesn't stop the others."""
-    return [run_company(store, client, company, max_new)
-            for company in interleave_by_platform(companies)]
+    doesn't stop the others. `progress(i, n, company)` is called before each company
+    (i counts from 1)."""
+    order, results = interleave_by_platform(companies), []
+    for i, company in enumerate(order, 1):
+        if progress:
+            progress(i, len(order), company)
+        results.append(run_company(store, client, company, max_new))
+    return results
