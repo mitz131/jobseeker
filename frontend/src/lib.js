@@ -314,6 +314,15 @@ export function filtersSummary(state, employers = "All") {
   return parts.join(" · ") || "none";
 }
 
+/** The banner while a refresh is crawling, from /api/status: the employer being
+ *  crawled and its position in the run, once the batch has reported one. */
+export function crawlingText(s, now = new Date()) {
+  const where = s.refresh_current && s.refresh_total
+    ? `${s.refresh_current} (${s.refresh_done}/${s.refresh_total})` : "all employers";
+  return `Fetching new jobs from ${where}, started ${formatAge(s.refresh_started_at, now)}. ` +
+    "New jobs are labelled afterwards; the list updates when it's done.";
+}
+
 /** The status line's "where it runs", from /api/status `running.where`. */
 export function runtimeText(where) {
   return { kubernetes: "on Kubernetes", container: "in a container", local: "running locally" }[where] ?? where;

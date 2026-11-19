@@ -1,6 +1,7 @@
 import unittest
+from unittest import mock
 
-from jobseeker.crawler.runner import interleave_by_platform, passes_filter, run_company
+from jobseeker.crawler.runner import interleave_by_platform, passes_filter, run_all, run_company
 from jobseeker.crawler.sources.base import JobRef
 from jobseeker.db import JobStore
 
@@ -72,3 +73,13 @@ class InterleaveTests(unittest.TestCase):
         companies = [{"name": str(i), "type": "workday" if i % 3 else "other"} for i in range(10)]
         self.assertCountEqual(interleave_by_platform(companies), companies)
 
+    def test_run_all_reports_each_company_before_crawling_it(self):
+        companies = [{"name": "a", "type": "workday"}, {"name": "b", "type": "workday"}, {"name": "c", "type": "oracle"}]
+        events = []
+        with mock.patch("jobseeker.crawler.runner.run_company",
+                        side_effect=lambda store, client, company, max_new: events.append(("crawl", company["name"]))):
+            run_all(None, None, companies, 10,
+                    progress=lambda i, n, company: events.append(("report", i, n, company["name"])))
+        order = [c["name"] for c in interleave_by_platform(companies)]
+        self.assertEqual(events, [e for i, name in enumerate(order, 1)
+                                  for e in (("report", i, 3, name), ("crawl", name))])

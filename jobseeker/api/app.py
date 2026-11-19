@@ -146,8 +146,9 @@ class Status(BaseModel):
     refresh_finished_at: str | None
     refresh_error: str | None
     refresh_phase: str | None = None  # "crawling" or "labelling" while running
-    refresh_done: int | None = None   # labelling progress
+    refresh_done: int | None = None   # crawling: position of the current employer; labelling: jobs done
     refresh_total: int | None = None
+    refresh_current: str | None = None  # while crawling: the employer being crawled
     refresh_note: str | None = None   # e.g. why labelling was skipped
     unlabelled: int | None = None     # stored jobs without current labels; None: labels not configured
     running: Runtime                  # where this server runs
@@ -213,8 +214,9 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
         refresher.report("crawling")
         s = JobStore(str(config.db_path))
         try:
-            run_all(s, HttpClient(delay=config.request_delay), config.companies(),
-                    config.max_new_per_company)
+            # done: the position of the employer being crawled, e.g. 21 of 33
+            run_all(s, HttpClient(delay=config.request_delay), config.companies(), config.max_new_per_company,
+                    lambda i, n, c: refresher.report("crawling", i, n, company_labels.get(c["name"], c["name"])))
         finally:
             s.close()
         label_new()
@@ -348,6 +350,7 @@ def create_app(config: Config, batch: Callable[[], object] | None = None,
             refresh_phase=refresher.phase,
             refresh_done=refresher.done,
             refresh_total=refresher.total,
+            refresh_current=refresher.current,
             refresh_note=refresher.note,
             unlabelled=(db.conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
                         - len(current_labels(db.conn, current))) if current else None,

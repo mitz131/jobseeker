@@ -30,11 +30,13 @@ class Refresher:
         self.phase: str | None = None        # what the running batch is doing, e.g. "crawling", "labelling"
         self.done: int | None = None         # progress within the phase, if it has a count
         self.total: int | None = None
+        self.current: str | None = None      # the item being worked on, e.g. the employer being crawled
         self.note: str | None = None         # a remark from the latest run that is not an error
 
-    def report(self, phase: str, done: int | None = None, total: int | None = None):
+    def report(self, phase: str, done: int | None = None, total: int | None = None,
+               current: str | None = None):
         """Called by the batch, from its thread."""
-        self.phase, self.done, self.total = phase, done, total
+        self.phase, self.done, self.total, self.current = phase, done, total, current
 
     @property
     def running(self) -> bool:
@@ -53,7 +55,7 @@ class Refresher:
             return False, "a background job is already running"
         self.started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         self.finished_at = self.error = self.note = None
-        self.phase = self.done = self.total = None
+        self.phase = self.done = self.total = self.current = None
         threading.Thread(target=self._run, args=(batch or self._batch,), name="jobseeker-refresh", daemon=True).start()
         return True, "started"
 
@@ -65,7 +67,7 @@ class Refresher:
             self.error = str(e)
         finally:
             self.finished_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            self.phase = self.done = self.total = None
+            self.phase = self.done = self.total = self.current = None
             self._lock.release()
 
     def wait(self, timeout: float | None = None) -> bool:
