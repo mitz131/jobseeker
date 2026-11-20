@@ -1,6 +1,7 @@
 from .assura import AssuraSource
 from .avature import AvatureSource
 from .bcge import BCGESource
+from .cornerstone import CornerstoneSource
 from .creditagricole import CreditAgricoleSource
 from .eightfold import EightfoldSource
 from .jobcloud import JobCloudSource
@@ -34,6 +35,7 @@ SOURCE_TYPES = {
     "radancy": RadancySource,
     "avature": AvatureSource,
     "eightfold": EightfoldSource,
+    "cornerstone": CornerstoneSource,
 }
 
 

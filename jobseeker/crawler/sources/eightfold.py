@@ -40,6 +40,11 @@ def in_country(position: dict, code: str) -> bool:
     return any(loc.split(",")[-1].strip() == code for loc in position.get("standardizedLocations") or [])
 
 
+def locations_text(locations: list[str], country: str) -> str:
+    """The job's places, those in `country` first (the job's place is taken from the first)."""
+    return " / ".join(place(loc) for loc in sorted(locations, key=lambda loc: place(loc).split(", ")[-1] != country))
+
+
 class EightfoldSource:
     def __init__(self, client, base_url: str, domain: str, location: str = "Switzerland",
                  country_code: str = "CH", **_):
@@ -63,7 +68,7 @@ class EightfoldSource:
                 yield JobRef(
                     job_id=job_id,
                     title=(p.get("name") or "").strip(),
-                    location=" / ".join(place(loc) for loc in p.get("locations") or []),
+                    location=locations_text(p.get("locations") or [], self.location),
                     url=urljoin(self.base_url + "/", p.get("positionUrl") or f"careers/job/{job_id}"),
                     posted_on=iso_date(p.get("postedTs")),
                     extra={"display_job_id": p.get("displayJobId"), "department": p.get("department"),
@@ -87,7 +92,7 @@ class EightfoldSource:
             description=html_to_text(html),
             raw={"url": data.get("publicUrl") or ref.url, **ref.extra, "facts": facts},
             title=(data.get("name") or "").strip() or None,
-            location=" / ".join(place(loc) for loc in data.get("locations") or []) or None,
+            location=locations_text(data.get("locations") or [], self.location) or None,
             url=data.get("publicUrl") or None,
             posted_on=iso_date(data.get("postedTs")) or None,
         )
