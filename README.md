@@ -115,6 +115,7 @@ frontend/
 | J. Safra Sarasin | Umantis (jsafrasarasin.umantis.com) | HTML (no JSON API) |
 | Cargill      | Radancy (careers.cargill.com), Switzerland location page | HTML + JSON-LD |
 | TotalEnergies | Avature (jobs.totalenergies.com), Country filter | HTML (no JSON API) |
+| Microsoft    | Eightfold (apply.careers.microsoft.com), location search | JSON API |
 
 Adding a company on a supported platform is just a config entry (with a
 `category`, so it shows in its group on the page). Other
