@@ -466,3 +466,15 @@ country_id = 41579               # Switzerland's option id (from the field's aut
 country = "Switzerland"          # listed country, checked on every result
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "microsoft"
+label = "Microsoft"
+category = "tech"
+type = "eightfold"               # apply.careers.microsoft.com (Eightfold): JSON search by location
+base_url = "https://apply.careers.microsoft.com"
+domain = "microsoft.com"         # Eightfold's tenant
+location = "Switzerland"         # the search's location
+country_code = "CH"              # checked on every result: jobs listing several countries keep only if one is Swiss
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]

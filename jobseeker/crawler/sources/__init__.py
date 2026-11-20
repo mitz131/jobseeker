@@ -2,6 +2,7 @@ from .assura import AssuraSource
 from .avature import AvatureSource
 from .bcge import BCGESource
 from .creditagricole import CreditAgricoleSource
+from .eightfold import EightfoldSource
 from .jobcloud import JobCloudSource
 from .johdi import JohdiSource
 from .lausanne import LausanneSource
@@ -32,6 +33,7 @@ SOURCE_TYPES = {
     "umantis": UmantisSource,
     "radancy": RadancySource,
     "avature": AvatureSource,
+    "eightfold": EightfoldSource,
 }
 
 
