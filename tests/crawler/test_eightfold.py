@@ -50,7 +50,7 @@ class EightfoldTests(unittest.TestCase):
         self.assertEqual(client.urls, [SEARCH.format(0), SEARCH.format(2)])
         self.assertEqual([(r.job_id, r.title, r.location, r.url, r.posted_on) for r in refs], [
             ("101", "Ingénieur fictif", "Zürich, Switzerland", BASE + "/careers/job/101", "2026-11-17"),
-            ("104", "Architecte fictif", "Germany / Geneva, Switzerland", BASE + "/careers/job/104", "2026-11-17"),
+            ("104", "Architecte fictif", "Geneva, Switzerland / Germany", BASE + "/careers/job/104", "2026-11-17"),
         ])   # 103 is only in Germany
 
     def test_no_results(self):

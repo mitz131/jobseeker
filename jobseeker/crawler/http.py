@@ -76,8 +76,8 @@ class HttpClient:
         except LookupError:   # a charset Python doesn't know
             return body.decode("utf-8", errors="replace")
 
-    def get_json(self, url: str):
-        return json.loads(self._request("GET", url, headers={"Accept": "application/json"})[1])
+    def get_json(self, url: str, headers: dict | None = None):
+        return json.loads(self._request("GET", url, headers={"Accept": "application/json", **(headers or {})})[1])
 
     def post_json(self, url: str, payload: dict, headers: dict | None = None):
         return json.loads(self._request("POST", url, json=payload,

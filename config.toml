@@ -34,6 +34,10 @@ label = "Tech & telecom"
 name = "consumer"
 label = "Consumer goods"
 
+[[category]]
+name = "international"
+label = "International organisations"
+
 # label             : display name on the page (default: name), e.g. "Lombard Odier"
 # category          : employer group on the page, a [[category]] name above
 #
@@ -476,5 +480,41 @@ base_url = "https://apply.careers.microsoft.com"
 domain = "microsoft.com"         # Eightfold's tenant
 location = "Switzerland"         # the search's location
 country_code = "CH"              # checked on every result: jobs listing several countries keep only if one is Swiss
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "sicpa"
+label = "SICPA"
+category = "tech"
+default_place = "Prilly"   # head office; only for jobs whose location can't be placed
+type = "successfactors"          # jobs.sicpa.com (SAP SuccessFactors Career Site, table layout like Nestlé)
+base_url = "https://jobs.sicpa.com"
+search = ""                      # no country facet: all jobs (~75) are listed, the Swiss ones kept below
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+location_include = ["Switzerland"]   # also hires in Albania, Ecuador, Malaysia, Spain, India, ...
+
+[[company]]
+name = "nexthink"
+label = "Nexthink"
+category = "tech"
+default_place = "Lausanne"   # head office; only for jobs whose location can't be placed
+type = "smartrecruiters"
+company = "Nexthink"
+country = "ch"                   # the API's own country filter (ISO code)
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "iata"
+label = "IATA"
+category = "international"
+default_place = "Genève"   # head office; only for jobs whose location can't be placed
+type = "cornerstone"             # iata.csod.com (Cornerstone OnDemand): JSON search with a country filter
+base_url = "https://iata.csod.com"
+corp = "iata"                    # the career site's c= parameter
+country = "CH"                   # sent to the search, and checked on every result
+crawl_delay = 10                 # iata.csod.com/robots.txt: Crawl-delay: 10
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
