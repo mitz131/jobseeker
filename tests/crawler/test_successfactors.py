@@ -100,3 +100,68 @@ class SuccessFactorsTests(unittest.TestCase):
                 '<span itemprop="description"><div><p>Role<br><br>Details</p></div></span>'
                 '<span itemprop="description">Profil</span><footer>x</footer>')
         self.assertEqual(html_to_text(extract_description(page)), "Intro\n\nRole\n\nDetails\n\nProfil")
+
+
+SITEMAP_BASE = "https://portal.example.test"
+SITEMAP = f"""<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.google.com/schemas/sitemap/0.9">
+<url><loc>{SITEMAP_BASE}/job/Lausanne-Stagiaire-fictif-VD/2001/</loc><lastmod>2026-11-14</lastmod></url>
+<url><loc>{SITEMAP_BASE}/job/Lausanne-Stagiaire-fictif-VD/2002/</loc><lastmod>2026-11-14</lastmod></url>
+<url><loc>{SITEMAP_BASE}/job/Lausanne-Fictional-Analyst-VD/2003/</loc><lastmod>2026-11-14</lastmod></url>
+<url><loc>{SITEMAP_BASE}/content/About-us/?locale=en_GB</loc></url>
+</urlset>"""
+
+
+def sitemap_page(slug, req, locale, title, location="Lausanne, Switzerland"):
+    """A job page shaped like the newer SuccessFactors sites', with made-up content."""
+    return f"""<html><head><link rel="canonical" href="{SITEMAP_BASE}/job/{slug}/{req}-{locale}/" /></head>
+<body><h1><span itemprop="title">{title}</span></h1><span itemprop="description">
+<p>Department: Département fictif</p><p>Location: {location}</p><p>Une annonce <b>fictive</b>.</p></span></body></html>"""
+
+
+class SitemapClient:
+    def __init__(self, sitemap=SITEMAP):
+        self.urls, self.sitemap = [], sitemap
+        self.pages = {
+            f"{SITEMAP_BASE}/sitemap.xml": sitemap,
+            f"{SITEMAP_BASE}/job/Lausanne-Stagiaire-fictif-VD/2001/": sitemap_page("Stagiaire-fictif", 77, "fr_FR", "Stagiaire fictif"),
+            f"{SITEMAP_BASE}/job/Lausanne-Stagiaire-fictif-VD/2002/": sitemap_page("Stagiaire-fictif", 77, "en_GB", "Fictional trainee"),
+            f"{SITEMAP_BASE}/job/Lausanne-Fictional-Analyst-VD/2003/": sitemap_page("Fictional-Analyst", 78, "fr_FR", "Analyste fictif", "Lausanne, Suisse"),
+        }
+
+    def get_text(self, url):
+        self.urls.append(url)
+        return self.pages[url]
+
+
+class SitemapListingTests(unittest.TestCase):
+    def source(self, client):
+        return SuccessFactorsSource(client, base_url=SITEMAP_BASE, listing="sitemap", locale="en_GB")
+
+    def test_one_job_per_requisition_in_the_preferred_language(self):
+        refs = list(self.source(SitemapClient()).list_jobs())
+        self.assertEqual([(r.job_id, r.title, r.location, r.url, r.extra) for r in refs], [
+            ("77", "Fictional trainee", "Lausanne, Switzerland", f"{SITEMAP_BASE}/job/Stagiaire-fictif/77-en_GB/", {"locale": "en_GB"}),
+            ("78", "Analyste fictif", "Lausanne, Suisse", f"{SITEMAP_BASE}/job/Fictional-Analyst/78-fr_FR/", {"locale": "fr_FR"}),
+        ])   # 78 has no English page; the /content/ page is not a job
+
+    def test_detail_reuses_the_page_read_for_the_listing(self):
+        client = SitemapClient()
+        src = self.source(client)
+        ref = next(src.list_jobs())
+        read = len(client.urls)
+        d = src.fetch_detail(ref)
+        self.assertEqual(len(client.urls), read)
+        self.assertIn("Une annonce fictive.", d.description)
+        self.assertEqual((d.location, d.raw), ("Lausanne, Switzerland", {"url": ref.url, "locale": "en_GB"}))
+
+    def test_job_page_without_canonical_requisition_is_an_error(self):
+        client = SitemapClient()
+        client.pages[f"{SITEMAP_BASE}/job/Lausanne-Fictional-Analyst-VD/2003/"] = "<html>Maintenance</html>"
+        with self.assertRaises(RuntimeError):
+            list(self.source(client).list_jobs())
+
+    def test_empty_sitemap_and_changed_layout(self):
+        empty = '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>'
+        self.assertEqual(list(self.source(SitemapClient(empty)).list_jobs()), [])
+        with self.assertRaises(RuntimeError):
+            list(self.source(SitemapClient("<?xml version='1.0'?><html/>")).list_jobs())

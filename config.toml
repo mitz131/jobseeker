@@ -518,3 +518,15 @@ country = "CH"                   # sent to the search, and checked on every resu
 crawl_delay = 10                 # iata.csod.com/robots.txt: Crawl-delay: 10
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "ioc"
+label = "IOC"
+category = "international"
+default_place = "Lausanne"   # head office; only for jobs whose location can't be placed
+type = "successfactors"          # ioc.jobs.hr.cloud.sap (SAP SuccessFactors, newer site)
+base_url = "https://ioc.jobs.hr.cloud.sap"
+listing = "sitemap"              # robots.txt disallows the search's /services/ endpoint; sitemap.xml + job pages
+locale = "en_GB"                 # each job is posted in French and English: keep the English page
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
