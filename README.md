@@ -119,6 +119,7 @@ frontend/
 | SICPA        | SAP SuccessFactors Career Site (jobs.sicpa.com), location filter | HTML (no JSON API) |
 | Nexthink     | SmartRecruiters                   | JSON API            |
 | IATA         | Cornerstone OnDemand (iata.csod.com), country filter | JSON API |
+| IOC          | SAP SuccessFactors (ioc.jobs.hr.cloud.sap), sitemap | XML sitemap + HTML |
 
 Adding a company on a supported platform is just a config entry (with a
 `category`, so it shows in its group on the page). Other

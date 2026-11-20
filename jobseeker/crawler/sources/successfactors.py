@@ -1,6 +1,6 @@
-"""SAP SuccessFactors Career Site Builder sites (Nestle, BCV, JTI, HSBC).
+"""SAP SuccessFactors Career Site Builder sites (Nestle, BCV, JTI, HSBC, SICPA, IOC).
 
-Two generations of the search page exist:
+Two generations of the search page exist, and a sitemap:
 
   listing = "html" (Nestle, JTI, HSBC): results are server-rendered, as table rows
     or (HSBC) as tiles
@@ -8,6 +8,11 @@ Two generations of the search page exist:
   listing = "api" (BCV): results come from the site's own JSON endpoint, which
     needs the session cookie and the CSRF token embedded in the search page
     POST {base}/services/recruiting/v1/jobs                         -> listing (JSON)
+  listing = "sitemap" (IOC, whose robots.txt disallows /services/): the sitemap lists
+    each job page once per language; every page is opened to read its title and its
+    canonical URL /job/<slug>/<requisition>-<locale>/, and one page per requisition is
+    kept (the one in `locale` if there is one)
+    GET  {base}/sitemap.xml                                         -> job page URLs
 
 Either way the job page is HTML:
   GET {base}/job/<slug>/<id>/                                       -> detail (HTML)
@@ -15,6 +20,7 @@ Either way the job page is HTML:
 
 import re
 import urllib.parse
+import xml.etree.ElementTree as ET
 from collections.abc import Iterator
 from html import unescape
 
@@ -25,6 +31,9 @@ from .base import JobDetail, JobRef
 
 JOB_ID_RE = re.compile(r"^/job/.+/(\d+)/?$")  # /job/<slug>/<id>/
 TOTAL_RE = re.compile(r"of\s*([\d,.]+)")
+# canonical job page URL of the newer sites: /job/<slug>/<requisition>-<locale>/
+CANONICAL_RE = re.compile(r"/job/[^/]+/(\d+)-([A-Za-z]{2}_[A-Za-z]{2})/?$")
+AD_LOCATION_RE = re.compile(r"^\s*Location\s*:\s*(.+?)\s*$", re.M)
 # Not HTML: the token is set in an inline script
 CSRF_RE = re.compile(r'var CSRFToken = "([^"]+)"')
 
@@ -62,6 +71,12 @@ def extract_description(page_html: str, classes: tuple[str, ...] = ("jobdescript
     return "\n".join(blocks)
 
 
+def ad_location(page_html: str) -> str:
+    """The "Location: Lausanne, Switzerland" line some ads start with (IOC), else ""."""
+    m = AD_LOCATION_RE.search(html_to_text(extract_description(page_html)))
+    return m[1].strip() if m else ""
+
+
 def page_locations(page_html: str) -> str:
     """All locations listed on a job page, in order, without the page's repeated copies."""
     locs = []
@@ -80,10 +95,11 @@ class SuccessFactorsSource:
         self.search = search
         # html listing: e.g. {"country": "CH"} -> optionsFacetsDD_country=CH
         self.facets = facets or {}
-        if listing not in ("html", "api"):
-            raise ValueError(f"listing must be 'html' or 'api', not {listing!r}")
+        if listing not in ("html", "api", "sitemap"):
+            raise ValueError(f"listing must be 'html', 'api' or 'sitemap', not {listing!r}")
         self.listing = listing
         self.locale = locale
+        self._pages: dict[str, str] = {}   # sitemap listing: job page HTML by URL, reused by fetch_detail
 
     def _search_url(self, startrow: int) -> str:
         params = {"q": self.search}
@@ -94,7 +110,33 @@ class SuccessFactorsSource:
         return f"{self.base_url}/search/?{urllib.parse.urlencode(params)}"
 
     def list_jobs(self) -> Iterator[JobRef]:
+        if self.listing == "sitemap":
+            return self._list_sitemap()
         return self._list_api() if self.listing == "api" else self._list_html()
+
+    def _list_sitemap(self) -> Iterator[JobRef]:
+        root = ET.fromstring(self.client.get_text(f"{self.base_url}/sitemap.xml"))
+        if root.tag.rsplit("}", 1)[-1] != "urlset":
+            raise RuntimeError(f"No urlset in {self.base_url}/sitemap.xml; layout may have changed")
+        by_req: dict[str, list[tuple[str, str, str]]] = {}   # requisition -> [(locale, url, title)]
+        # by local name: sitemaps use sitemaps.org's namespace or (IOC) Google's older one
+        for loc in (el for el in root.iter() if el.tag.rsplit("}", 1)[-1] == "loc"):
+            url = (loc.text or "").strip()
+            if not JOB_ID_RE.search(urllib.parse.urlparse(url).path):
+                continue
+            page = self.client.get_text(url)
+            soup = BeautifulSoup(page, "html.parser")
+            canonical = soup.find("link", rel="canonical")
+            m = CANONICAL_RE.search(canonical.get("href", "")) if canonical else None
+            title = soup.select_one("[itemprop=title]")
+            if not m or not title:
+                raise RuntimeError(f"No canonical requisition or title on {url}; page layout may have changed")
+            self._pages[canonical["href"]] = page
+            by_req.setdefault(m[1], []).append((m[2], canonical["href"], _text(title)))
+        for req, versions in by_req.items():
+            locale, url, title = next((v for v in versions if v[0] == self.locale), versions[0])
+            yield JobRef(job_id=req, title=title, url=url, location=ad_location(self._pages[url]),
+                         extra={"locale": locale})
 
     def _list_api(self) -> Iterator[JobRef]:
         token = CSRF_RE.search(self.client.get_text(f"{self.base_url}/search/?q="))
@@ -163,10 +205,10 @@ class SuccessFactorsSource:
                 break
 
     def fetch_detail(self, ref: JobRef) -> JobDetail:
-        page = self.client.get_text(ref.url)
+        page = self._pages.get(ref.url) or self.client.get_text(ref.url)
         html = extract_description(page)
         if not html_to_text(html):
             # e.g. the posting was withdrawn: don't store an empty job, retry next run
             raise ValueError(f"No description found on {ref.url}")
         return JobDetail(description_html=html, description=html_to_text(html),
-                         raw={"url": ref.url}, location=page_locations(page) or None)
+                         raw={"url": ref.url, **ref.extra}, location=page_locations(page) or ref.location or None)
