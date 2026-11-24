@@ -90,6 +90,9 @@ class Place:
         return math.dist((self.e, self.n), (other.e, other.n)) / 1000
 
 
+POSTCODE_RE = re.compile(r"^(\d{4})(?:\s+(.+))?$")   # "1800" or "1800 Vevey"
+
+
 @dataclass
 class Resolution:
     status: str  # "ok", "unknown" (deliberately no point) or "unresolved" (needs a mapping)
@@ -181,6 +184,10 @@ class Places:
         if norm(raw) in self.ignore:
             return Resolution("unknown", note="ignored in places.toml")
         parts = [p.strip() for p in re.split(r",| - ", raw) if p.strip()]
+        # A Swiss postcode, alone or in front of the name ("8640 Rapperswil"): the
+        # fallback when the name alone doesn't place the job (ambiguous, a district)
+        plz = next((m[1] for p in parts if (m := POSTCODE_RE.match(p))), None)
+        parts = [POSTCODE_RE.sub(r"\2", p) if POSTCODE_RE.match(p) and not p.isdigit() else p for p in parts]
         canton = next((p.upper() for p in parts if p.upper() in CANTONS), None)
         names = [p for p in parts if not p.isdigit() and p.upper() not in CANTONS
                  and norm(p) not in COUNTRY_WORDS]
@@ -199,6 +206,8 @@ class Places:
         if res.status == "unresolved" and len(names) == 1 and codes[0]:
             # A lone canton name that is not also a town: "Graubünden", "Jura"
             return self._cantons(codes)
+        if res.status == "unresolved" and plz and (place := self.postcode(plz)):
+            return Resolution("ok", [place], f"postcode {plz} ({res.note})")
         return res
 
     def _cantons(self, codes: list[str]) -> Resolution:

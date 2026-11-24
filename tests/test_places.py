@@ -61,6 +61,15 @@ class PlacesTests(unittest.TestCase):
         self.assertEqual(self.names("Lausanne, Lausanne, Suisse"), [("Lausanne", "VD")])
         self.assertEqual(self.names("Vevey, VD, CH, 1800"), [("Vevey", "VD")])
 
+    def test_postcode_in_front_of_the_name(self):
+        self.assertEqual(self.names("1800 Vevey"), [("Vevey", "VD")])
+        # the name alone is unknown or ambiguous: the postcode places it
+        self.assertEqual(self.names("1004 Lausanne Ouchy"), [("Lausanne", "VD")])
+        self.assertEqual(self.names("1607 Oron"), [("Palézieux", "VD")])      # a municipality without a canton hint
+        # a mapping in places.toml still comes first; the postcode is only a fallback
+        self.assertEqual(self.names("2538 Romont"), [("Romont FR", "FR")])
+        self.assertEqual(self.p.resolve("9999 Nowhere").status, "unresolved")
+
     def test_majority_share_settles_spillover(self):
         self.assertEqual(self.names("Avenches, CH"), [("Avenches", "VD")])
 

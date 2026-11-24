@@ -120,6 +120,7 @@ frontend/
 | Nexthink     | SmartRecruiters                   | JSON API            |
 | IATA         | Cornerstone OnDemand (iata.csod.com), country filter | JSON API |
 | IOC          | SAP SuccessFactors (ioc.jobs.hr.cloud.sap), sitemap | XML sitemap + HTML |
+| Generali     | Prospective career centre (jobs.generali.ch) | HTML + JSON-LD |
 
 Adding a company on a supported platform is just a config entry (with a
 `category`, so it shows in its group on the page). Other

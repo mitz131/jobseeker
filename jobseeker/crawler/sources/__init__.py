@@ -9,6 +9,7 @@ from .johdi import JohdiSource
 from .lausanne import LausanneSource
 from .oracle import OracleSource
 from .phenom import PhenomSource
+from .prospective import ProspectiveSource
 from .radancy import RadancySource
 from .sfcareer import SFCareerSource
 from .smartrecruiters import SmartRecruitersSource
@@ -36,6 +37,7 @@ SOURCE_TYPES = {
     "avature": AvatureSource,
     "eightfold": EightfoldSource,
     "cornerstone": CornerstoneSource,
+    "prospective": ProspectiveSource,
 }
 
 
