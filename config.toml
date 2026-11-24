@@ -530,3 +530,14 @@ listing = "sitemap"              # robots.txt disallows the search's /services/ 
 locale = "en_GB"                 # each job is posted in French and English: keep the English page
 [company.filter]
 title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+
+[[company]]
+name = "generali"
+label = "Generali"
+category = "insurer"
+default_place = "Nyon"   # head office in Romandie (also Adliswil); only for jobs whose location can't be placed
+type = "prospective"             # jobs.generali.ch (Prospective career centre): all of Generali Switzerland's jobs
+base_url = "https://jobs.generali.ch"
+lang = "de"
+[company.filter]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
