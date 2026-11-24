@@ -65,7 +65,7 @@ site = "External_Career_Site"
 search = ""
 facet_filters = { Country = ["Switzerland"] }
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "philipmorris"
@@ -77,7 +77,7 @@ base_url = "https://join.pmicareers.com"
 search = ""
 selected_fields = { country = ["Switzerland"] }   # server-side facet, by name
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "nestle"
@@ -89,7 +89,7 @@ base_url = "https://jobdetails.nestle.com"
 search = ""
 facets = { country = "CH" }      # server-side country filter (ISO code)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "logitech"
@@ -103,7 +103,7 @@ site = "Logitech"
 search = ""
 facet_filters = { Country = ["Switzerland"] }
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "vaudoise"
@@ -113,7 +113,7 @@ default_place = "Lausanne"   # head office; only for jobs whose location can't b
 type = "vaudoise"                # Switzerland-only employer: no country filter needed
 listing_url = "https://www.vaudoise.ch/fr/carrieres/postes-disponibles"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "etatdevaud"
@@ -125,7 +125,7 @@ host = "https://fa-ewrg-saasfaeuraprod1.fa.ocs.oraclecloud.com"
 sites = ["CX_1", "enseignement"]  # general + teaching; jobs on both are stored once
 public_url = "https://offres-emploi.vd.ch/#fr/sites/{site}"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 
 [[company]]
@@ -139,7 +139,7 @@ listing = "api"
 locale = "fr_FR"
 search = ""                      # Vaud bank: no country filter needed
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "salt"
@@ -150,7 +150,7 @@ type = "jobcloud"                # job list hosted by JobCloud, linked from salt
 company = "salt-mobile-sa"
 lang = "fr"                      # Swiss-only employer: no country filter needed
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "cisco"
@@ -165,7 +165,7 @@ page_id = "page4"                # the search-results page
 selected_fields = { country = ["Switzerland"] }   # also keeps Europe-wide roles that list a Swiss city
 page_size = 50
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "swisscom"
@@ -178,7 +178,7 @@ tenant = "swisscom"
 site = "SwisscomExternalCareers"
 search = ""                      # Swiss-only employer: no country filter needed
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "creditagricole"
@@ -189,7 +189,7 @@ type = "creditagricole"          # group portal: Indosuez, CACEIS, CA-CIB... in 
 base_url = "https://groupecreditagricole.jobs"
 location_id = 176                # the portal's code for Switzerland (Suisse)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "pictet"
@@ -201,7 +201,7 @@ host = "https://career012.successfactors.eu"
 company = "banquepict"
 country = "Switzerland"          # read from each job's page: the feed has no location
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "lombardodier"
@@ -221,7 +221,7 @@ facets = { locations = [
   "a77b9af6fe89012ae655db34b600f514",   # Zürich
 ] }
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "piguetgalland"
@@ -233,7 +233,7 @@ api_url = "https://ats.johdisuite.ch/api/company/eyJpdiI6ImlzTU9rOE51UG9nbWtBRUZ
 job_url = "https://www.piguetgalland.ch/offre-emploi?offer={id}"
 lang = "fr"                      # Swiss-only employer: no country filter needed
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "mirabaud"
@@ -245,7 +245,7 @@ company = "MirabaudCieSA"
 country = "ch"                   # the API's own country filter (ISO code)
 job_url = "https://www.mirabaud.com/en/careers/job-opportunities/job-details/{id}"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 
 [[company]]
@@ -257,7 +257,7 @@ type = "smartrecruiters"         # SmartRecruiters' public API; jobs.smartrecrui
 company = "Swissquote"
 country = "ch"                   # the API's own country filter (ISO code): Swiss postings only (Gland, Dübendorf, Zürich)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 
 [[company]]
@@ -270,7 +270,7 @@ host = "https://iaadtu.fa.ocs.oraclecloud.eu"
 sites = ["CX_1"]
 lang = "en"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 location_include = ["Switzerland"]   # also hires in Luxembourg and Jersey
 
 
@@ -284,7 +284,7 @@ host = "https://evht.fa.ocs.oraclecloud.eu"
 sites = ["CX_7001"]
 lang = "en"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 location_include = ["Switzerland"]   # also hires in France, Luxembourg, Belgium, Monaco and Italy
 
 
@@ -299,7 +299,7 @@ sites = ["CX_1001"]
 lang = "en"
 location_id = 300000000289177    # Switzerland (server-side filter; never list the worldwide catalogue)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 
 [[company]]
@@ -309,7 +309,7 @@ category = "administration"
 default_place = "Lausanne"   # the city itself; only for jobs whose location can't be placed
 type = "lausanne"                # the city (the canton is etatdevaud); lausanne.ch's own job search
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "trafigura"
@@ -323,7 +323,7 @@ site = "TrafiguraCareerSite"
 search = ""
 facet_filters = { Country = ["Switzerland"] }   # Switzerland only (locationCountry facet; the location main-group facet is empty here)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 
 [[company]]
@@ -335,7 +335,7 @@ type = "smartrecruiters"         # SmartRecruiters' public API; vitol.com/open-r
 company = "vitol"
 country = "ch"                   # the API's own country filter (ISO code): Swiss postings only
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "gunvor"
@@ -351,7 +351,7 @@ search = ""
 # Swiss city in the list). A new Swiss city needs adding: `jobseeker facets gunvor`
 facets = { locations = ["5e0cfe9d17bf0191bb0153adb83bc826"] }   # Geneva
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "temenos"
@@ -364,7 +364,7 @@ tenant = "temenos"
 site = "Temenoscareers"
 search = ""                      # no Country facet on this site (only worldwide locations): filtered client-side below
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 location_include = ["Switzerland", "Genève", "Geneva", "Lancy", "Zurich", "Zürich", "Lausanne"]   # Swiss sites only
 
 [[company]]
@@ -374,7 +374,7 @@ category = "bank"
 default_place = "Genève"   # head office; only for jobs whose location can't be placed
 type = "bcge"                    # Banque Cantonale de Genève: jobs.bcge.ch's own JSON API (Swiss jobs only, no country filter needed)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "deutschebank"
@@ -388,7 +388,7 @@ site = "DBWebsite"
 search = ""
 facet_filters = { Country = ["Switzerland"] }   # Switzerland only (worldwide site)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "jti"
@@ -400,7 +400,7 @@ base_url = "https://jobs.jti.com"
 search = ""
 facets = { country = "CH" }      # server-side country filter (ISO code)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "pg"
@@ -415,7 +415,7 @@ site_country = "eu"
 search = ""
 selected_fields = { country = ["Switzerland"] }   # server-side facet, by name
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "hsbc"
@@ -427,7 +427,7 @@ base_url = "https://apply.careers.hsbc.com"   # results shown as tiles; mycareer
 search = ""
 facets = { country = "CH" }      # server-side country filter (ISO code)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "assura"
@@ -436,7 +436,7 @@ category = "insurer"
 default_place = "Pully"   # head office; only for jobs whose location can't be placed
 type = "assura"                  # assura.ch careers pages: the site's Cockpit CMS API (Swiss jobs only, no country filter needed)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "jsafrasarasin"
@@ -446,7 +446,7 @@ default_place = "Basel"   # head office; only for jobs whose location can't be p
 type = "umantis"                 # Bank J. Safra Sarasin's Umantis portal (Swiss jobs only, no country filter needed)
 base_url = "https://jsafrasarasin.umantis.com"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "cargill"
@@ -456,7 +456,7 @@ default_place = "Genève"   # the Geneva trading hub; only for jobs whose locati
 type = "radancy"                 # careers.cargill.com (Radancy): the Switzerland location page; robots.txt disallows /search-jobs/
 location_url = "https://careers.cargill.com/en/location/switzerland-jobs/23251/2658434/2"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "totalenergies"
@@ -469,7 +469,7 @@ country_field = 3834             # the Country field's number in the search form
 country_id = 41579               # Switzerland's option id (from the field's autocomplete answer)
 country = "Switzerland"          # listed country, checked on every result
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "microsoft"
@@ -481,7 +481,7 @@ domain = "microsoft.com"         # Eightfold's tenant
 location = "Switzerland"         # the search's location
 country_code = "CH"              # checked on every result: jobs listing several countries keep only if one is Swiss
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "sicpa"
@@ -492,7 +492,7 @@ type = "successfactors"          # jobs.sicpa.com (SAP SuccessFactors Career Sit
 base_url = "https://jobs.sicpa.com"
 search = ""                      # no country facet: all jobs (~75) are listed, the Swiss ones kept below
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 location_include = ["Switzerland"]   # also hires in Albania, Ecuador, Malaysia, Spain, India, ...
 
 [[company]]
@@ -504,7 +504,7 @@ type = "smartrecruiters"
 company = "Nexthink"
 country = "ch"                   # the API's own country filter (ISO code)
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "iata"
@@ -517,7 +517,7 @@ corp = "iata"                    # the career site's c= parameter
 country = "CH"                   # sent to the search, and checked on every result
 crawl_delay = 10                 # iata.csod.com/robots.txt: Crawl-delay: 10
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "ioc"
@@ -529,7 +529,7 @@ base_url = "https://ioc.jobs.hr.cloud.sap"
 listing = "sitemap"              # robots.txt disallows the search's /services/ endpoint; sitemap.xml + job pages
 locale = "en_GB"                 # each job is posted in French and English: keep the English page
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
 
 [[company]]
 name = "generali"
@@ -540,4 +540,4 @@ type = "prospective"             # jobs.generali.ch (Prospective career centre):
 base_url = "https://jobs.generali.ch"
 lang = "de"
 [company.filter]
-title_exclude = ["intern", "internship", "stagiaire", "apprenti", "praktikant", "praktikum", "lernende", "lehrstelle"]
+title_exclude = ["intern", "internship", "stagiaire", "apprenti", "apprendista", "praktikant", "praktikum", "lernende", "lehrstelle"]
