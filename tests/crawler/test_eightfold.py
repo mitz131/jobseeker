@@ -4,6 +4,7 @@ from jobseeker.crawler.sources.eightfold import EightfoldSource, place
 
 BASE = "https://careers.example.test"
 SEARCH = BASE + "/api/pcsx/search?domain=example.com&query=&location=Switzerland&start={}"
+CAREERS = BASE + "/careers?location=Switzerland"
 DETAIL = BASE + "/api/pcsx/position_details?position_id={}&domain=example.com&hl=en"
 
 
@@ -29,6 +30,11 @@ class FakeClient:
     def __init__(self, answers):
         self.answers, self.urls = answers, []
 
+    def get_text(self, url):
+        self.urls.append(url)
+        assert url == CAREERS, url
+        return "<html>career site</html>"
+
     def get_json(self, url):
         self.urls.append(url)
         return self.answers[url]
@@ -47,7 +53,8 @@ class EightfoldTests(unittest.TestCase):
     def test_listing_pages_and_keeps_only_swiss_jobs(self):
         client = FakeClient({SEARCH.format(0): page([ZURICH, GERMANY], 3), SEARCH.format(2): page([BOTH], 3)})
         refs = list(source(client).list_jobs())
-        self.assertEqual(client.urls, [SEARCH.format(0), SEARCH.format(2)])
+        # the career page first: it sets the visitor cookies the search expects
+        self.assertEqual(client.urls, [CAREERS, SEARCH.format(0), SEARCH.format(2)])
         self.assertEqual([(r.job_id, r.title, r.location, r.url, r.posted_on) for r in refs], [
             ("101", "Ingénieur fictif", "Zürich, Switzerland", BASE + "/careers/job/101", "2026-11-17"),
             ("104", "Architecte fictif", "Geneva, Switzerland / Germany", BASE + "/careers/job/104", "2026-11-17"),
