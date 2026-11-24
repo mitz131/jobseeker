@@ -1,5 +1,8 @@
 """Eightfold career sites, e.g. Microsoft's apply.careers.microsoft.com.
 
+  GET {base_url}/careers?location=<location>
+      -> the career site page: sets the visitor cookies (_vs, _vscid) that the API
+         expects; without them the search answers HTTP 429 "Please try again later"
   GET {base_url}/api/pcsx/search?domain=<domain>&query=&location=<location>&start=N
       -> data.positions (10 per page) and data.count; each position has `locations`
          ("Switzerland, Zürich, Zürich": country, region, city) and `standardizedLocations`
@@ -55,6 +58,9 @@ class EightfoldSource:
         self.country_code = country_code
 
     def list_jobs(self) -> Iterator[JobRef]:
+        # as a browser does: the career page first, so the API calls carry its cookies
+        # (the client keeps them for the run)
+        self.client.get_text(f"{self.base_url}/careers?{urlencode({'location': self.location})}")
         start, seen = 0, set()
         for _ in range(MAX_PAGES):
             query = urlencode({"domain": self.domain, "query": "", "location": self.location, "start": start})
